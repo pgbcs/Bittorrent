@@ -3,18 +3,11 @@ const torrentParser = require('./torrentParser');
 const {genID} = require('./util')
 
 module.exports.getPeers =async (torrent, callback)=>{
-    try {
-        const resp = await httpGET('127.0.0.1', 3000, buildConnReq());
-        console.log('Data received:', resp); 
-        if(respType(resp) === "connect"){
-            const connResp = parseConnResp(resp);
-            const announceReq = buildAnnounceReq(connResp.connection_id, torrent);
-            httpGET('127.0.0.1', 3000, announceReq);
-        }
-        else if(respType(resp)==='announce'){
-
-        }
-    } catch (error) {
+    try{
+        const announceReq = buildAnnounceReq(torrent);
+        const resp = await httpGET('127.0.0.1', 3000, announceReq);
+        console.log('Data received: ',resp);
+    }catch (error){
         console.error('Error occurred:', error);
     }
 }
@@ -41,36 +34,21 @@ function httpGET(hostname, port, param) {
     });
 }
 
-function buildConnReq(){
+
+function buildAnnounceReq(torrent, port=6881){
     return {
         connection_id: 0x41727101980,
-        action: 'connect',
-        transaction_id: 0x88,
-    }
-}
-
-
-function respType(resp){
-    const {action} = JSON.parse(resp);
-    return action;
-}
-
-function parseConnResp(resp){
-    return JSON.parse(resp);
-}
-
-function buildAnnounceReq(connection_id, torrent, port=6881){
-    return {
-        connection_id,
         action: "announce",
-        info_hash: torrentParser.inforHash(torrent),
+        info_hash: "torrentParser.inforHash(torrent)",
         peer_id: genID(),
         event: '',
         downloaded: 0,
-        left,
+        left: 0,
         uploaded: 0,
-        IP_address,
+        IP_address: 123456,
         port,
         num_want:-1,
+        transaction_id: 0x88,
+        compact: 0,
     }
 }
