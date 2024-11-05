@@ -7,6 +7,7 @@ module.exports.getPeers =async (torrent, callback)=>{
         const announceReq = buildAnnounceReq(torrent);
         const resp = await httpGET('127.0.0.1', 3000, announceReq);
         console.log('Data received: ',resp);
+        callback(JSON.parse(resp));
     }catch (error){
         console.error('Error occurred:', error);
     }
@@ -39,7 +40,7 @@ function buildAnnounceReq(torrent, port=6881){
     return {
         connection_id: 0x41727101980,
         action: "announce",
-        info_hash: "torrentParser.inforHash(torrent)",
+        info_hash: torrentParser.inforHash(torrent),
         peer_id: genID(),
         event: '',
         downloaded: 0,
