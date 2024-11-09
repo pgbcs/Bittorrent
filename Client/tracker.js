@@ -9,28 +9,7 @@ module.exports.getPeers =async (torrent, callback)=>{
         const announceReq = buildAnnounceReq(torrent);
         const resp = await httpGET('127.0.0.1', 3000, announceReq);
         console.log('Data received: ',resp);
-        
-        //mở server để tiếp nhận kết nối
-        const server = net.createServer((socket)=>{
-            console.log('Một peer mới đã kết nối.');
 
-        socket.on('data', (data)=>{
-            console.log(data.toString());
-        })
-        // Xử lý khi một peer ngắt kết nối
-        socket.on('end', () => {
-            console.log('Một peer đã ngắt kết nối.');
-        });
-
-        // Xử lý lỗi
-        socket.on('error', (err) => {
-            console.error('Lỗi từ một peer:', err.message);
-        });
-
-        });
-        server.listen(genPort(), () => {
-            console.log(`Peer lắng nghe tại cổng ${genPort()}`);
-          });
         callback(JSON.parse(resp));
     }catch (error){
         console.error('Error occurred:', error);

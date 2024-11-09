@@ -30,6 +30,7 @@ function onWholeMsg(socket, callback) {
   let handshake = true;
 
   socket.on('data', recvBuf => {
+    console.log("msg from server", recvBuf.toString());
     // msgLen calculates the length of a whole message
     const msgLen = () => handshake ? savedBuf.readUInt8(0) + 49 : savedBuf.readInt32BE(0) + 4;
     savedBuf = Buffer.concat([savedBuf, recvBuf]);
