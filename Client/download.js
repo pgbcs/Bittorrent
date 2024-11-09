@@ -3,6 +3,8 @@ const Buffer = require('buffer').Buffer;
 const tracker = require('./tracker');
 const { genID,genPort } = require('./util');
 const message = require('./message');
+const {msgHandler} = require('./messageHandler');
+
 
 module.exports = torrent => {
   tracker.getPeers(torrent, (peers) => {
@@ -30,7 +32,7 @@ function onWholeMsg(socket, callback) {
   let handshake = true;
 
   socket.on('data', recvBuf => {
-    console.log("msg from server", recvBuf.toString());
+    // console.log(recvBuf.toString());
     // msgLen calculates the length of a whole message
     const msgLen = () => handshake ? savedBuf.readUInt8(0) + 49 : savedBuf.readInt32BE(0) + 4;
     savedBuf = Buffer.concat([savedBuf, recvBuf]);
@@ -42,32 +44,3 @@ function onWholeMsg(socket, callback) {
     }
   });
 }
-
-
-function msgHandler(msg, socket) {
-  if (isHandshake(msg)) socket.write(message.buildInterested());
-  else {
-    const m = message.parse(msg);
-
-    if (m.id === 0) chokeHandler();
-    if (m.id === 1) unchokeHandler();
-    if (m.id === 4) haveHandler(m.payload);
-    if (m.id === 5) bitfieldHandler(m.payload);
-    if (m.id === 7) pieceHandler(m.payload);
-  }
-}
-
-
-function isHandshake(msg) {
-  return msg.length === msg.readUInt8(0) + 49 &&
-         msg.toString('utf8', 1) === 'BitTorrent protocol';
-}
-function chokeHandler() {  }
-
-function unchokeHandler() {  }
-
-function haveHandler(payload) {  }
-
-function bitfieldHandler(payload) {  }
-
-function pieceHandler(payload) {  }
