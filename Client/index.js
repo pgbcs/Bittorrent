@@ -5,9 +5,10 @@ const download = require('./download');
 const peerServer = require('./server');
 const {genPort} = require('./util');
 
-const torrent = torrentParser.open('sample.torrent');
+const torrent = torrentParser.open('bluemew.torrent');
+
 
 peerServer(genPort(),torrent);
-
-download(torrent);
+console.log(torrent.info);
+download(torrent, torrent.info.name + "1");
 // while(1);
