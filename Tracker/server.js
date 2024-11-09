@@ -18,7 +18,9 @@ const server = http.createServer((req, res) => {
                 peer_id,
                 IP_address,
                 port}
-            if(!trackList.find(obj => obj.IP_address === newPeer.IP_address)){
+
+            //use for test
+            if(!trackList.find(obj => obj.port === newPeer.port)){
                 trackList.push(newPeer);
             }
             //return list peer for client

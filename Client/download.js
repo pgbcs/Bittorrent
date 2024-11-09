@@ -1,14 +1,20 @@
 const net = require('net');
 const Buffer = require('buffer').Buffer;
 const tracker = require('./tracker');
+const { genID,genPort } = require('./util');
+const message = require('./message');
 
 module.exports = torrent => {
-  tracker.getPeers(torrent, peers => {
-    peers.forEach(download);
+  tracker.getPeers(torrent, (peers) => {
+    peers.forEach(peer => download(peer, torrent));
   });
 };
 
-function download(peer) {
+function download(peer,torrent) {
+  if (genPort()==peer.port) {
+    console.log('it"s you');
+    return;
+  }
   const socket = net.Socket();
   socket.on('error', console.log);
 
@@ -39,6 +45,15 @@ function onWholeMsg(socket, callback) {
 
 function msgHandler(msg, socket) {
   if (isHandshake(msg)) socket.write(message.buildInterested());
+  else {
+    const m = message.parse(msg);
+
+    if (m.id === 0) chokeHandler();
+    if (m.id === 1) unchokeHandler();
+    if (m.id === 4) haveHandler(m.payload);
+    if (m.id === 5) bitfieldHandler(m.payload);
+    if (m.id === 7) pieceHandler(m.payload);
+  }
 }
 
 
@@ -46,3 +61,12 @@ function isHandshake(msg) {
   return msg.length === msg.readUInt8(0) + 49 &&
          msg.toString('utf8', 1) === 'BitTorrent protocol';
 }
+function chokeHandler() {  }
+
+function unchokeHandler() {  }
+
+function haveHandler(payload) {  }
+
+function bitfieldHandler(payload) {  }
+
+function pieceHandler(payload) {  }

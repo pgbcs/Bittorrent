@@ -1,7 +1,7 @@
 'use strict';
-
+const util = require('./util');
 const Buffer = require('buffer').Buffer;
-const torrentParser = require('./torrent-parser');
+const torrentParser = require('./torrentParser');
 
 module.exports.buildHandshake = torrent => {
   const buf = Buffer.alloc(68);
@@ -13,9 +13,10 @@ module.exports.buildHandshake = torrent => {
   buf.writeUInt32BE(0, 20);
   buf.writeUInt32BE(0, 24);
   // info hash
-  torrentParser.infoHash(torrent).copy(buf, 28);
+  torrentParser.inforHash(torrent).copy(buf, 28);
   // peer id
-  buf.write(util.genId());
+  util.genID().copy(buf,48);
+//   buf.write(util.genID());
   return buf;
 };
 

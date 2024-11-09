@@ -6,6 +6,5 @@ const download = require('./download');
 const torrent = torrentParser.open('sample.torrent');
 
 
-tracker.getPeers(torrent, peers => {
-    console.log('list of peers: ', peers);
-});
+download(torrent);
+// while(1);

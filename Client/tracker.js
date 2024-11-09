@@ -1,12 +1,36 @@
 const http = require('http');
 const torrentParser = require('./torrentParser');
-const {genID} = require('./util')
+const {genID, genPort} = require('./util')
+const net = require('net');
+
 
 module.exports.getPeers =async (torrent, callback)=>{
     try{
         const announceReq = buildAnnounceReq(torrent);
         const resp = await httpGET('127.0.0.1', 3000, announceReq);
         console.log('Data received: ',resp);
+        
+        //mở server để tiếp nhận kết nối
+        const server = net.createServer((socket)=>{
+            console.log('Một peer mới đã kết nối.');
+
+        socket.on('data', (data)=>{
+            console.log(data.toString());
+        })
+        // Xử lý khi một peer ngắt kết nối
+        socket.on('end', () => {
+            console.log('Một peer đã ngắt kết nối.');
+        });
+
+        // Xử lý lỗi
+        socket.on('error', (err) => {
+            console.error('Lỗi từ một peer:', err.message);
+        });
+
+        });
+        server.listen(genPort(), () => {
+            console.log(`Peer lắng nghe tại cổng ${genPort()}`);
+          });
         callback(JSON.parse(resp));
     }catch (error){
         console.error('Error occurred:', error);
@@ -35,8 +59,9 @@ function httpGET(hostname, port, param) {
     });
 }
 
-
-function buildAnnounceReq(torrent, port=6881){
+//gen port do chạy cùng máy
+function buildAnnounceReq(torrent, port=genPort()){
+    console.log("genPort", port);
     return {
         connection_id: 0x41727101980,
         action: "announce",
@@ -46,7 +71,7 @@ function buildAnnounceReq(torrent, port=6881){
         downloaded: 0,
         left: 0,
         uploaded: 0,
-        IP_address: 123456,
+        IP_address: '127.0.0.1',
         port,
         num_want:-1,
         transaction_id: 0x88,
