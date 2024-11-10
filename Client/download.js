@@ -31,7 +31,7 @@ function download(peer,torrent, pieces, file) {
     socket.write(message.buildHandshake(torrent));
   });
 
-  onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, file));
+  onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, file, torrent));
 }
 
 function onWholeMsg(socket, callback) {

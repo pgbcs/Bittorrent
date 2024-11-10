@@ -85,7 +85,7 @@ function msgHandler(socket, msg, torrent){
         const receivedMsg = parseHandshake(msg);
         if(receivedMsg.inforHash.equals(inforHash(torrent))){
             socket.write(message.buildHandshake(torrent));
-
+            socket.write(message.buildBitfield(createBitfieldFromList(pieces)));
             //init state is choked
             chokedPeerList.push({
                 peerId: receivedMsg.peerId,
@@ -100,6 +100,7 @@ function msgHandler(socket, msg, torrent){
     else{
         const m = message.parse(msg);
         if(m.id == 2) interestedHandler(socket);
+        if(m.id == 6) requestHandler(socket, m.payload);
     }
 }
 
@@ -115,7 +116,65 @@ function isHandshake(msg) {
            msg.slice(0,20).toString('utf8', 1) === 'BitTorrent protocol';
 }
 
+
 function interestedHandler(socket){
     //TODO: do logic something to decide unchoke or not
     socket.write(message.buildUnchoke());
+}
+
+function createBitfieldFromList(pieces){
+    let bitfield = pieces.map(piece => piece ? '1' : '0').join('');
+    //spare zero
+    while (bitfield.length % 8 !== 0) { bitfield += '0'; }
+    const byteArray = []; 
+    for (let i = 0; i < bitfield.length; i += 8) {
+        byteArray.push(parseInt(bitfield.slice(i, i + 8), 2)); 
+    }
+    const buffer = Buffer.from(byteArray);
+    return buffer;
+}
+
+
+function requestHandler(socket, payload) {
+    console.log(payload);
+    const {index, begin, length: lengthRequested} = payload;
+    
+    // convert lenghtRequested from buffer to num
+    const length =lengthRequested.readUInt32BE(0);
+
+    console.log(`Received Request: index=${index}, begin=${begin}, length=${length}`);
+
+    sendPiece(socket, index, begin, length);
+}
+
+function sendPiece(socket, index, begin, lengthRequested) {
+    const pieceData = pieces[index]; // Lấy dữ liệu của phần tương ứng
+    if (pieceData) {
+        // Cắt dữ liệu đúng size bắt đầu từ begin
+        const dataToSend = pieceData.slice(begin, begin + lengthRequested);
+        console.log('data will send: ', typeof(dataToSend));
+        if (dataToSend.length > 0) {
+            // Gửi lại dữ liệu
+            const responseMsg =Buffer.alloc(13+dataToSend.length);
+
+            responseMsg.writeUInt32BE(dataToSend.length + 9, 0);
+            responseMsg.writeUInt8(7, 4);
+            responseMsg.writeUInt32BE(index, 5);
+            responseMsg.writeUInt32BE(begin, 9);
+            dataToSend.copy(responseMsg, 13);
+
+            // const responsePacket = Buffer.concat([
+            //     Buffer.alloc(4).writeUInt32BE(dataToSend.length + 9, 0), // chiều dài gói mới
+            //     Buffer.alloc(1).writeUInt8(7, 0), // id=7 cho message "piece"
+            //     Buffer.alloc(4).writeUInt32BE(index, 0), // index
+            //     Buffer.alloc(4).writeUInt32BE(begin, 0), // begin
+            //     dataToSend // dữ liệu phần
+            // ]);
+            console.log("will response: ", responseMsg);
+            socket.write(responseMsg);
+            console.log(`Sent piece: index=${index}, begin=${begin}, length=${dataToSend.length}`);
+        }
+    } else {
+        console.error(`Requested piece ${index} not found.`);
+    }
 }

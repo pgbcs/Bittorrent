@@ -80,18 +80,18 @@ module.exports.buildBitfield = bitfield => {
     return buf;
 };
 
-module.exports.buildRequest = payload => {
+module.exports.buildRequest = pieceBlock => {
     const buf = Buffer.alloc(17);
     // length
     buf.writeUInt32BE(13, 0);
     // id
     buf.writeUInt8(6, 4);
     // piece index
-    buf.writeUInt32BE(payload.index, 5);
+    buf.writeUInt32BE(pieceBlock.index, 5);
     // begin
-    buf.writeUInt32BE(payload.begin, 9);
+    buf.writeUInt32BE(pieceBlock.begin, 9);
     // length
-    buf.writeUInt32BE(payload.length, 13);
+    buf.writeUInt32BE(pieceBlock.length, 13);
     return buf;
 };
 
