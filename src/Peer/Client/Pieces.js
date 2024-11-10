@@ -3,15 +3,15 @@
 const tp = require('./torrentParser');
 
 module.exports = class {
-  constructor(torrent) {
-    function buildPiecesArray() {
+  constructor(torrent,  isSeeder) {
+    function buildPiecesArray(isSeeder) {
       const nPieces = torrent.info.pieces.length / 20;
       const arr = new Array(nPieces).fill(null);
-      return arr.map((_, i) => new Array(tp.blocksPerPiece(torrent, i)).fill(false));
+      return arr.map((_, i) => new Array(tp.blocksPerPiece(torrent, i)).fill(isSeeder));
     }
 
     this._requested = buildPiecesArray();
-    this._received = buildPiecesArray();
+    this._received = buildPiecesArray(isSeeder);
   }
 
   addRequested(pieceBlock) {

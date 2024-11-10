@@ -1,7 +1,7 @@
-const message = require('./message');
+const message = require('../util/message');
 const fs = require('fs');
 
-module.exports.msgHandler= function(msg, socket, pieces, queue, file, torrent) {
+module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
     }
@@ -12,7 +12,7 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, file, torrent) {
       if (m.id === 1) unchokeHandler(socket, pieces,queue);
       if (m.id === 4) haveHandler(m.payload, socket, pieces, queue);
       if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload);
-      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, file, torrent);
+      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file);
     }
   }
   
@@ -55,15 +55,20 @@ function bitfieldHandler(socket, pieces, queue, payload) {
 
 
 
-function pieceHandler(payload, socket, pieces, queue, file,torrent){ 
+function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent,file){ 
   pieces.addReceived(payload);
   console.log("data received", payload);
   //write peer to file
-  const offset = payload.index * torrent.info['piece length'] + payload.begin;
-  
-  fs.write(file, payload.block, 0, payload.block.length, offset, () => {});
+  // const offset = payload.index * torrent.info['piece length'] + payload.begin;
+  payload.block.copy(piecesBuffer[payload.index], payload.begin);
+  // fs.write(file, payload.block, 0, payload.block.length, offset, () => {});
 
   if (pieces.isDone()) {
+    const fileDescriptor = fs.openSync(file, 'w');
+    piecesBuffer.forEach((piece, index)=>{
+      fs.write(fileDescriptor, piece, 0, piece.length, index*torrent.info['piece length'], () => {});
+    })
+    fs.closeSync(fileDescriptor);
     socket.end();
     console.log('DONE!');
   } else {

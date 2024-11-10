@@ -2,23 +2,20 @@ const net = require('net');
 const Buffer = require('buffer').Buffer;
 const tracker = require('./tracker');
 const { genID,genPort } = require('./util');
-const message = require('./message');
+const message = require('../util/message');
 const {msgHandler} = require('./messageHandler');
 const Pieces = require('./Pieces');
 const Queue = require('./Queue');
 const fs = require('fs');
 // let pieces = {};
 
-module.exports = (torrent, path) => {
-  const pieces = new Pieces(torrent);
-  const file = fs.openSync(path, 'w');
-
+module.exports = (torrent, pieces,piecesBuffer,file) => {
   tracker.getPeers(torrent, (peers) => {
-    peers.forEach(peer => download(peer, torrent, pieces, file));
+    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file));
   });
 };
 
-function download(peer,torrent, pieces, file) {
+function download(peer,torrent, pieces, piecesBuffer, file) {
   const queue = new Queue(torrent);
   if (genPort()==peer.port) {
     console.log('it"s you');
@@ -31,7 +28,7 @@ function download(peer,torrent, pieces, file) {
     socket.write(message.buildHandshake(torrent));
   });
 
-  onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, file, torrent));
+  onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent,file));
 }
 
 function onWholeMsg(socket, callback) {
