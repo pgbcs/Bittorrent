@@ -18,7 +18,7 @@ if(args[0]=='seeder'){
 const pieces = new Pieces(torrent, isSeeder);
 
 
-const path = "D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer/received/bluemew.jpg";
+const path = "D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer3/received/bluemew.jpg";
 
 const PIECE_SIZE = 16384;
 
@@ -55,12 +55,14 @@ fs.readFile(path, (err, data) => {
 
 
 
-const server = peerServer.server(genPort(),torrent,pieces,piecesBuffer);
+peerServer(genPort(),torrent,pieces,piecesBuffer);
 
 if(args[0] == 'download'){
     download(torrent, pieces,piecesBuffer, path);
 }
 if(args[0] == 'seeder'){
+    console.log(pieces);
     tracker.getPeers(torrent,()=>{});
+    download(torrent, pieces,piecesBuffer, path);
 }
 // console.log(torrent.info);

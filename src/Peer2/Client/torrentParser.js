@@ -8,7 +8,6 @@ module.exports.open = (filepath) => {
 
 module.exports.inforHash = torrent =>{
     const info = bencode.encode(torrent.info);
-    console.log(torrent.info);
     return crypto.createHash('sha1').update(info).digest();
 }
 

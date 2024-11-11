@@ -40,7 +40,6 @@ function httpGET(hostname, port, param) {
 
 //gen port do chạy cùng máy
 function buildAnnounceReq(torrent, port=genPort()){
-    console.log("genPort", port);
     return {
         connection_id: 0x41727101980,
         action: "announce",

@@ -1,19 +1,19 @@
 const net = require('net');
 const message = require('../util/message');
 const { inforHash } = require('../Client/torrentParser');
-
+const { time } = require('console');
 // const Buffer = require('buffer').Buffer;
 
 let chokedPeerList = []; //quản lý trạng thái choked how to định danh kết nối trong đây????
 
-module.exports.server = (port, torrent, pieces, piecesBuffer) =>{
+module.exports = (port, torrent, pieces, piecesBuffer) =>{
     const server = net.createServer((socket)=>{
         console.log('Một peer mới đã kết nối.');
         //timer
         const timeOutId = setTimeout(()=>{
             console.log("Đóng kết nối vì thời gian phản hồi của peer đã quá hạn.");
             socket.end();
-        },1.5*60*1000);
+        },2*60*1000);
         //handle data
         socket.on('data', (data)=>{
             console.log(data.toString());
@@ -27,9 +27,7 @@ module.exports.server = (port, torrent, pieces, piecesBuffer) =>{
             console.log('Một peer đã ngắt kết nối.');
         });
         
-        socket.on('close', ()=>{
-            clearTimeout(timeOutId);
-        })
+
         // Xử lý lỗi
         socket.on('error', (err) => {
             console.error('Lỗi từ một peer:', err.message);
@@ -40,8 +38,7 @@ module.exports.server = (port, torrent, pieces, piecesBuffer) =>{
         server.listen(port, () => {
             console.log(`Peer lắng nghe tại cổng ${port}`);
         });
-        return server;
-};
+}
 
 
 
@@ -85,7 +82,6 @@ function isHandshake(msg) {
 }
 
 function keepAliveHandler(socket, timeOutId){
-    console.log("received keep alive msg");
     clearTimeout(timeOutId);
     timeOutId = setTimeout(()=>{
         console.log("Đóng kết nối vì thời gian phản hồi của peer đã quá hạn.");

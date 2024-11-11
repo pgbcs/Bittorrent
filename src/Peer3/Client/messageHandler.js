@@ -56,9 +56,8 @@ function bitfieldHandler(socket, pieces, queue, payload) {
 
 
 function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent,file){ 
-  console.log("pieces: ", pieces);
   pieces.addReceived(payload);
-  // console.log(`data received:`, payload.block);
+  console.log("data received", payload);
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   payload.block.copy(piecesBuffer[payload.index], payload.begin);
@@ -84,6 +83,7 @@ function requestPiece(socket, pieces, queue) {
     const pieceBlock = queue.deque();
     console.log("PieceBlock: ", pieceBlock);
     if (pieces.needed(pieceBlock)) {
+      console.log("needed block");
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;

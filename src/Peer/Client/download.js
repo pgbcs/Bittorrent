@@ -22,13 +22,27 @@ function download(peer,torrent, pieces, piecesBuffer, file) {
     return;
   }
   const socket = net.Socket();
-  socket.on('error', console.log);
 
+  //keep connection
+  const timer = setInterval(()=>{
+    socket.write(message.buildKeepAlive());
+  }, 2*60*1000)
+
+  socket.on('error', (err) => {
+    console.error('Socket error:', err);
+    clearInterval(timer); // Xóa timer khi có lỗi
+  });
+
+  socket.on('close', ()=>{
+    clearInterval(timer);
+    console.log("cleared timer");
+  })
   socket.connect(peer.port, peer.ip, () => {
     socket.write(message.buildHandshake(torrent));
   });
 
-  onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent,file));
+
+  // onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent,file));
 }
 
 function onWholeMsg(socket, callback) {

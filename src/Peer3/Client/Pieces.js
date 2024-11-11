@@ -29,6 +29,7 @@ module.exports = class {
       this._requested = this._received.map(blocks => blocks.slice());
     }
     const blockIndex = pieceBlock.begin / tp.BLOCK_LEN;
+
     return !this._requested[pieceBlock.index][blockIndex];
   }
 
