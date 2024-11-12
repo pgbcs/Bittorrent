@@ -4,45 +4,74 @@ const tracker = require('./tracker');
 const { genID,genPort } = require('./util');
 const message = require('../util/message');
 const {msgHandler} = require('./messageHandler');
-const Pieces = require('./Pieces');
 const Queue = require('./Queue');
-const fs = require('fs');
+
 // let pieces = {};
 
-module.exports = (torrent, pieces,piecesBuffer,file) => {
+const minimumPeerNeed = 2;
+
+let connectedPeer = [];
+
+module.exports = (torrent, pieces,piecesBuffer,file, state) => {
+  let timerID = null;
   tracker.getPeers(torrent, (peers) => {
-    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file));
+    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file, state, timerID));
   });
+
+  timerID = setInterval(() => {
+    if(connectedPeer.length<minimumPeerNeed){
+      console.log("get list peers");
+      tracker.getPeers(torrent, (peers) => {
+        peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file, state, timerID));
+      });
+    }
+  },10000);
+
 };
 
-function download(peer,torrent, pieces, piecesBuffer, file) {
+function download(peer,torrent, pieces, piecesBuffer, file, state, timerID) {
   const queue = new Queue(torrent);
   if (genPort()==peer.port) {
-    console.log('it"s you');
+    console.log("Skip myself");
     return;
   }
-  const socket = net.Socket();
 
-  //keep connection
-  const timer = setInterval(()=>{
-    socket.write(message.buildKeepAlive());
-  }, 2*60*1000)
+  //check if u have connected to this peer
+  if(!connectedPeer.find(obj => obj.port === peer.port)){
+    const socket = net.Socket();
+    
 
-  socket.on('error', (err) => {
-    console.error('Socket error:', err);
-    clearInterval(timer); // Xóa timer khi có lỗi
-  });
+    //keep connection
+    const timer = setInterval(()=>{
+      socket.write(message.buildKeepAlive());
+    }, 1.5*60*1000)
 
-  socket.on('close', ()=>{
-    clearInterval(timer);
-    console.log("cleared timer");
-  })
-  socket.connect(peer.port, peer.ip, () => {
-    socket.write(message.buildHandshake(torrent));
-  });
+    socket.on('error', (err) => {
+      console.error('Socket error:', err);
+      //remove peer from connectedPeer if error
+      connectedPeer = connectedPeer.filter(obj => obj.port !== peer.port);
+      clearInterval(timer); // Xóa timer khi có lỗi
+    });
+
+    socket.on('close', ()=>{
+      clearInterval(timer);
+      //remove peer from connectedPeer if close
+      connectedPeer = connectedPeer.filter(obj => obj.port !== peer.port);
+      console.log("list connected after closed connection: ", connectedPeer);
+      console.log("cleared timer");
+    })
+
+    socket.connect(peer.port, peer.ip, () => {
+      socket.write(message.buildHandshake(torrent));
+      //push peer to connectedPeer if connected
+      const peerConnection = peer;
+  
+      connectedPeer.push(peerConnection);
+    });
 
 
-  // onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent,file));
+    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer));
+  } 
 }
 
 function onWholeMsg(socket, callback) {

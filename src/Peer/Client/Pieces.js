@@ -31,7 +31,9 @@ module.exports = class {
     const blockIndex = pieceBlock.begin / tp.BLOCK_LEN;
     return !this._requested[pieceBlock.index][blockIndex];
   }
-
+  havePiece(pieceIndex){
+    return this._received[pieceIndex].every(block=> block);
+  }
   isDone() {
     return this._received.every(blocks => blocks.every(i => i));
   }

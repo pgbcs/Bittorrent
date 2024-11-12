@@ -8,7 +8,7 @@ module.exports.getPeers =async (torrent, callback)=>{
     try{
         const announceReq = buildAnnounceReq(torrent);
         const resp = await httpGET('127.0.0.1', 3000, announceReq);
-
+        
         callback(JSON.parse(resp));
     }catch (error){
         console.error('Error occurred:', error);

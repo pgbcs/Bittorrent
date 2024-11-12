@@ -1,7 +1,7 @@
 const message = require('../util/message');
 const fs = require('fs');
 
-module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file) {
+module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
     }
@@ -12,7 +12,7 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
       if (m.id === 1) unchokeHandler(socket, pieces,queue);
       if (m.id === 4) haveHandler(m.payload, socket, pieces, queue);
       if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload);
-      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file);
+      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer);
     }
   }
   
@@ -32,10 +32,11 @@ function unchokeHandler(socket, pieces, queue) {
   requestPiece(socket, pieces, queue);
 }
   
-function haveHandler(socket, pieces, queue, payload) {
+function haveHandler(payload, socket, pieces, queue) {
   const pieceIndex = payload.readUInt32BE(0);
-  const queueEmpty = queue.length === 0;
+  const queueEmpty = queue.length() === 0;
   queue.queue(pieceIndex);
+  console.log("queue is empty: ", queueEmpty);
   if (queueEmpty) requestPiece(socket, pieces, queue);
 }
   
@@ -55,22 +56,35 @@ function bitfieldHandler(socket, pieces, queue, payload) {
 
 
 
-function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent,file){ 
+function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer){ 
   pieces.addReceived(payload);
-  console.log("data received", payload);
+  // console.log("data received", payload);
+  console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   payload.block.copy(piecesBuffer[payload.index], payload.begin);
   // fs.write(file, payload.block, 0, payload.block.length, offset, () => {});
 
+  //annouce for every peer is connecting know about new piece block you have
+  if(pieces.havePiece(payload.index)){
+    state.connections.forEach((connect)=>{
+      connect.write(message.buildHave(payload.index));
+    })
+  }
+  
+
   if (pieces.isDone()) {
     const fileDescriptor = fs.openSync(file, 'w');
     piecesBuffer.forEach((piece, index)=>{
-      fs.write(fileDescriptor, piece, 0, piece.length, index*torrent.info['piece length'], () => {});
+      fs.writeSync(fileDescriptor, piece, 0, piece.length, index * torrent.info['piece length']);
     })
     fs.closeSync(fileDescriptor);
     socket.end();
     console.log('DONE!');
+    if(timerID){
+      clearInterval(timerID);
+      console.log("cleared timer for get list peers");
+    }
   } else {
     requestPiece(socket,pieces, queue);
   }

@@ -66,6 +66,8 @@ module.exports.buildHave = payload => {
     buf.writeUInt8(4, 4);
     // piece index
     buf.writeUInt32BE(payload, 5);
+
+    console.log("have msg: ", buf);
     return buf;
 };
 

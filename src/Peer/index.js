@@ -2,7 +2,7 @@ const tracker = require('./Client/tracker');
 const bencode = require('bencode');
 const torrentParser = require('./Client/torrentParser');
 const download = require('./Client/download');
-const peerServer = require('./Server/server');
+const {server, state} = require('./Server/server');
 const {genPort} = require('./Client/util');
 const Pieces = require('./Client/Pieces');
 const fs = require('fs');
@@ -16,9 +16,7 @@ if(args[0]=='seeder'){
 }
 
 const pieces = new Pieces(torrent, isSeeder);
-
-
-const path = "D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer/received/bluemew.jpg";
+const path = `D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer/received/bluemew${args[1]? args[1]:''}.jpg`;
 
 const PIECE_SIZE = 16384;
 
@@ -55,10 +53,10 @@ fs.readFile(path, (err, data) => {
 
 
 
-const server = peerServer.server(genPort(),torrent,pieces,piecesBuffer);
+const peerServer = server(genPort(),torrent,pieces,piecesBuffer);
 
 if(args[0] == 'download'){
-    download(torrent, pieces,piecesBuffer, path);
+    download(torrent, pieces,piecesBuffer, path, state);
 }
 if(args[0] == 'seeder'){
     tracker.getPeers(torrent,()=>{});

@@ -5,45 +5,48 @@ const { inforHash } = require('../Client/torrentParser');
 // const Buffer = require('buffer').Buffer;
 
 let chokedPeerList = []; //quản lý trạng thái choked how to định danh kết nối trong đây????
+const state = {
+    connections: [],
+};
+module.exports = {state,
+    server: (port, torrent, pieces, piecesBuffer) => {
+        const server = net.createServer((socket) => {
+            console.log('Một peer mới đã kết nối.');
+            state.connections.push(socket);
+            // timer
+            const timeOutId = setTimeout(() => {
+                console.log("Đóng kết nối vì thời gian phản hồi của peer đã quá hạn.");
+                socket.end();
+            }, 2 * 60 * 1000);
+            // handle data
+            socket.on('data', (data) => {
+                console.log(data.toString());
+                msgHandler(socket, data, torrent, pieces, piecesBuffer, timeOutId);
+            });
 
-module.exports.server = (port, torrent, pieces, piecesBuffer) =>{
-    const server = net.createServer((socket)=>{
-        console.log('Một peer mới đã kết nối.');
-        //timer
-        const timeOutId = setTimeout(()=>{
-            console.log("Đóng kết nối vì thời gian phản hồi của peer đã quá hạn.");
-            socket.end();
-        },1.5*60*1000);
-        //handle data
-        socket.on('data', (data)=>{
-            console.log(data.toString());
-            // socket.write(`Welcome to the BitTorrent peer! from server port: ${port}`);
-            msgHandler(socket, data, torrent, pieces ,piecesBuffer, timeOutId);
-        })
+            // Xử lý khi một peer ngắt kết nối
+            socket.on('end', () => {
+                state.connections = state.connections.filter(conn => conn !== socket);
+                console.log('Một peer đã ngắt kết nối.');
+                console.log('connection udpate: ', state.connections);
+            });
 
+            socket.on('close', () => {
+                clearTimeout(timeOutId);
+            });
+            // Xử lý lỗi
+            socket.on('error', (err) => {
+                console.error('Lỗi từ một peer:', err.message);
+            });
+        });
 
-        // Xử lý khi một peer ngắt kết nối
-        socket.on('end', () => {
-            console.log('Một peer đã ngắt kết nối.');
-        });
-        
-        socket.on('close', ()=>{
-            clearTimeout(timeOutId);
-        })
-        // Xử lý lỗi
-        socket.on('error', (err) => {
-            console.error('Lỗi từ một peer:', err.message);
-        });
-        
-        });
-        
         server.listen(port, () => {
             console.log(`Peer lắng nghe tại cổng ${port}`);
         });
+
         return server;
+    }
 };
-
-
 
 function msgHandler(socket, msg, torrent, pieces, piecesBuffer, timeOutId){
     // console.log("msg :", msg);
