@@ -8,6 +8,9 @@ let chokedPeerList = []; //quản lý trạng thái choked how to định danh k
 const state = {
     connections: [],
 };
+
+
+
 module.exports = {state,
     server: (port, torrent, pieces, piecesBuffer) => {
         const server = net.createServer((socket) => {
@@ -20,7 +23,7 @@ module.exports = {state,
             }, 2 * 60 * 1000);
             // handle data
             socket.on('data', (data) => {
-                console.log(data.toString());
+                // console.log(data.toString());
                 msgHandler(socket, data, torrent, pieces, piecesBuffer, timeOutId);
             });
 
@@ -56,6 +59,7 @@ function msgHandler(socket, msg, torrent, pieces, piecesBuffer, timeOutId){
         if(receivedMsg.inforHash.equals(inforHash(torrent))){
             socket.write(message.buildHandshake(torrent));
             socket.write(message.buildBitfield(createBitfieldFromList(pieces)));
+            // console.log("bitfield message will send: ",message.buildBitfield(createBitfieldFromList(pieces)));
             //init state is choked
             chokedPeerList.push({
                 peerId: receivedMsg.peerId,
@@ -110,6 +114,8 @@ function createBitfieldFromList(pieces){
         byteArray.push(parseInt(bitfield.slice(i, i + 8), 2)); 
     }
     const buffer = Buffer.from(byteArray);
+
+    // console.log("bitfield will response:",buffer);
     return buffer;
 }
 
@@ -131,6 +137,7 @@ function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
     if (pieceData) {
         // Cắt dữ liệu đúng size bắt đầu từ begin
         const dataToSend = pieceData.slice(begin, begin + lengthRequested);
+        // console.log("dataToSend: ", dataToSend);
         if (dataToSend.length > 0) {
             // Gửi lại dữ liệu
             const responseMsg =Buffer.alloc(13+dataToSend.length);
@@ -141,7 +148,6 @@ function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
             responseMsg.writeUInt32BE(begin, 9);
             dataToSend.copy(responseMsg, 13);
 
-            console.log("will response: ", responseMsg);
             socket.write(responseMsg);
             console.log(`Sent piece: index=${index}, begin=${begin}, length=${dataToSend.length}`);
         }

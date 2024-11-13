@@ -20,7 +20,7 @@ module.exports = (torrent, pieces,piecesBuffer,file, state) => {
 
   timerID = setInterval(() => {
     if(connectedPeer.length<minimumPeerNeed){
-      console.log("get list peers");
+      console.log("get list peers again");
       tracker.getPeers(torrent, (peers) => {
         peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file, state, timerID));
       });
@@ -30,11 +30,13 @@ module.exports = (torrent, pieces,piecesBuffer,file, state) => {
 };
 
 function download(peer,torrent, pieces, piecesBuffer, file, state, timerID) {
-  const queue = new Queue(torrent);
   if (genPort()==peer.port) {
     console.log("Skip myself");
     return;
   }
+
+  const queue = new Queue(torrent);
+  
 
   //check if u have connected to this peer
   if(!connectedPeer.find(obj => obj.port === peer.port)){
@@ -78,8 +80,9 @@ function onWholeMsg(socket, callback) {
   let savedBuf = Buffer.alloc(0);
   let handshake = true;
 
-  socket.on('data', recvBuf => {
-    // console.log(recvBuf.toString());
+  socket.on('data', recvBuf => {// need check
+    // callback(recvBuf);
+    // return;
     // msgLen calculates the length of a whole message
     const msgLen = () => handshake ? savedBuf.readUInt8(0) + 49 : savedBuf.readInt32BE(0) + 4;
     savedBuf = Buffer.concat([savedBuf, recvBuf]);

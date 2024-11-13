@@ -12,6 +12,7 @@ module.exports = class {
 
     this._requested = buildPiecesArray(isSeeder);
     this._received = buildPiecesArray(isSeeder);
+    this._freq = new Array(torrent.info.pieces.length/20).fill(0) // use for rarest first
   }
 
   addRequested(pieceBlock) {

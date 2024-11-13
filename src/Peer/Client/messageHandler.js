@@ -7,11 +7,11 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
     }
     else {
       const m = message.parse(msg);
-    
+      // console.log("message:", m);
       if (m.id === 0) chokeHandler(socket);
       if (m.id === 1) unchokeHandler(socket, pieces,queue);
-      if (m.id === 4) haveHandler(m.payload, socket, pieces, queue);
-      if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload);
+      if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer);
+      if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload, peer);
       if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer);
     }
   }
@@ -32,26 +32,34 @@ function unchokeHandler(socket, pieces, queue) {
   requestPiece(socket, pieces, queue);
 }
   
-function haveHandler(payload, socket, pieces, queue) {
+function haveHandler(payload, socket, pieces, queue, peer) {
   const pieceIndex = payload.readUInt32BE(0);
   const queueEmpty = queue.length() === 0;
-  queue.queue(pieceIndex);
-  console.log("queue is empty: ", queueEmpty);
+  queue.queue(pieceIndex, ++pieces._freq[pieceIndex]);
+  
+  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue);
   if (queueEmpty) requestPiece(socket, pieces, queue);
 }
   
-function bitfieldHandler(socket, pieces, queue, payload) {
+function bitfieldHandler(socket, pieces, queue, payload, peer) {
+  console.log("receive bitfield");
   const queueEmpty = queue.length() === 0;
+  console.log("bitfieldHandler: ", payload);
+  const isInterested = false;
   payload.forEach((byte, i) => {
     for (let j = 0; j < 8; j++) {
-      if (byte % 2) queue.queue(i * 8 + 7 - j);
+      if (byte % 2){
+        queue.queue(i * 8 + 7 - j, ++pieces._freq[i * 8 + 7 - j]);
+        isIntersted = true;
+      }
       byte = Math.floor(byte / 2);
     }
   });
-  console.log('queue: ', queue._queue);
+  console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
   if (queueEmpty) requestPiece(socket, pieces, queue);
   //send interested 
   socket.write(message.buildInterested());
+  console.log("send interested");
 }
 
 
@@ -94,8 +102,20 @@ function requestPiece(socket, pieces, queue) {
   if (queue.choked) return null;
 
   while (queue.length()) {
-    const pieceBlock = queue.deque();
-    console.log("PieceBlock: ", pieceBlock);
+    let pieceBlock = queue.deque();
+
+    while(pieceBlock.freq != pieces._freq[pieceBlock.index]){ // nếu block trong queue có freq khác với freq hiện tại thì phải cập nhật lại freq
+      // console.log("pieceBlock freq: ", pieceBlock.freq)
+      // console.log("current pieces freq: ", pieces._freq[pieceBlock.index]);
+      pieceBlock._freq = pieces._freq[pieceBlock.index];
+      queue.queue(pieceBlock.index, pieceBlock._freq);
+      pieceBlock = queue.deque();
+      // console.log("udpated freq");
+      // break;
+    }
+    
+    // console.log("PieceBlock request: ", pieceBlock);
+
     if (pieces.needed(pieceBlock)) {
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);

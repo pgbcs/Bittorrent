@@ -8,7 +8,7 @@ const Pieces = require('./Client/Pieces');
 const fs = require('fs');
 
 const args = process.argv.slice(2);
-const torrent = torrentParser.open('bluemew.torrent');
+const torrent = torrentParser.open('video.mkv.torrent');
 
 let isSeeder = false;
 if(args[0]=='seeder'){
@@ -16,10 +16,11 @@ if(args[0]=='seeder'){
 }
 
 const pieces = new Pieces(torrent, isSeeder);
-const path = `D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer/received/bluemew${args[1]? args[1]:''}.jpg`;
+const path = `D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer/received/video${args[1]? args[1]:''}.mkv`;
 
-const PIECE_SIZE = 16384;
+const PIECE_SIZE = torrent.info['piece length'];
 
+console.log(torrent.info);
 //create piece buffer
 const piecesBuffer = []; // Danh sách các piece
 let pieceCount = Math.ceil(torrent.info.length / PIECE_SIZE);
@@ -44,7 +45,7 @@ fs.readFile(path, (err, data) => {
         const end = Math.min((i + 1) * PIECE_SIZE, data.length);
         data.slice(start, end).copy(piecesBuffer[i]);
         
-        console.log(`Piece ${i + 1}:`, piecesBuffer[i]);
+        // console.log(`Piece ${i + 1}:`, piecesBuffer[i]);
     }
 
     console.log(`Total pieces: ${piecesBuffer.length}`);
