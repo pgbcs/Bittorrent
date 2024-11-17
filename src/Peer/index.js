@@ -1,18 +1,15 @@
 const tracker = require('./Client/tracker');
-const bencode = require('bencode');
 const torrentParser = require('./Client/torrentParser');
 const download = require('./Client/download');
 const {server, state} = require('./Server/server');
 const {genPort} = require('./Client/util');
-const Pieces = require('./Client/Pieces');
-const fs = require('fs');
 const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
 
 const args = process.argv.slice(2);
-const torrentPath = 'bluemew.torrent';
-// const torrentPath = 'video.mkv.torrent';
+// const torrentPath = 'bluemew.torrent';
+const torrentPath = 'video.mkv.torrent';
 // const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 
@@ -35,15 +32,15 @@ let piecesBuffer, pieces;
 async function processFile() {
     try {
         [piecesBuffer, pieces] = await processFiles(fileInfoList, torrent);
-        console.log('pieces: ', pieces);
+        // console.log('pieces: ', pieces);
         const peerServer = server(genPort(),torrent, pieces, piecesBuffer);
 
     if(args[0] == 'download'){
         (async () => {
             await selectFiles(fileInfoList);
         
-            console.log('\nKết quả sau khi chọn:');
-            displayFileList(fileInfoList);
+            // console.log('\nKết quả sau khi chọn:');
+            // displayFileList(fileInfoList);
             download(torrent, pieces,piecesBuffer, fileInfoList, state);
         })();
     }

@@ -2,6 +2,7 @@ const message = require('../util/message');
 const fs = require('fs');
 const torrentParser = require('../Client/torrentParser');
 const path = require('path');
+
 module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
@@ -68,7 +69,10 @@ function bitfieldHandler(socket, pieces, queue, payload, peer) {
 function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer){
   pieces.addReceived(payload);
   // console.log("data received", payload);
-  console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+  /****************
+  *Use for show download concurrently
+    console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+  ****************/
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   if(!piecesBuffer[payload.index]){
@@ -96,7 +100,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
     console.log('DONE!');
     if(timerID){
       clearInterval(timerID);
-      console.log("cleared timer for get list peers");
+      // console.log("cleared timer for get list peers");
     }
   } else {
     requestPiece(socket,pieces, queue);
@@ -121,7 +125,7 @@ function requestPiece(socket, pieces, queue) {
     
     // console.log("request piece: ", pieces.needed(pieceBlock));
     if (pieces.needed(pieceBlock)) {
-      console.log(`Request piece ${pieceBlock.index} from peer`);
+      // console.log(`Request piece ${pieceBlock.index} from peer`);
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;
@@ -145,12 +149,12 @@ function writeFilesFromPieces(fileInfoList, piecesBuffer, torrent) {
       const dirPath = path.dirname(filePath);
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
-        console.log(`Thư mục đã được tạo: ${dirPath}`);
+        // console.log(`Thư mục đã được tạo: ${dirPath}`);
       }
       // Mở file để ghi
       const fileDescriptor = fs.openSync(filePath, 'w');
 
-      console.log(`Ghi vào file: ${filePath}`);
+      // console.log(`Ghi vào file: ${filePath}`);
 
       let remainingLength = length;
       let offset = 0;
@@ -158,27 +162,26 @@ function writeFilesFromPieces(fileInfoList, piecesBuffer, torrent) {
       while (remainingLength > 0) {
           const pieceIndex = startPiece + Math.floor((offset+byteOffset) / torrent.info['piece length']);
           const byteOffsetInPiece = (byteOffset + offset) % torrent.info['piece length'];
-
+  
           // Kiểm tra nếu piece chưa tồn tại
           if (!piecesBuffer[pieceIndex]) {
               console.log(`Piece ${pieceIndex} không tồn tại trong buffer.`);
               break;
           }
 
+          
           // Tính toán phần dữ liệu cần ghi
           const availableSpaceInPiece = torrent.info['piece length'] - byteOffsetInPiece;
           const bytesToWrite = Math.min(remainingLength, availableSpaceInPiece);
-
-          // Ghi dữ liệu từ piece vào file
-          fs.writeSync(
-              fileDescriptor,
-              piecesBuffer[pieceIndex],
-              byteOffsetInPiece,
-              bytesToWrite,
-              offset
-          );
-
-          console.log(`Ghi piece ${pieceIndex}, offset ${offset}, bytes ${bytesToWrite}`);
+            // Ghi dữ liệu từ piece vào file
+            fs.writeSync(
+                fileDescriptor,
+                piecesBuffer[pieceIndex],
+                byteOffsetInPiece,
+                bytesToWrite,
+                offset
+            );
+          // console.log(`Ghi piece ${pieceIndex}, offset ${offset}, bytes ${bytesToWrite}`);
 
           offset += bytesToWrite;
           remainingLength -= bytesToWrite;

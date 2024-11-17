@@ -32,7 +32,7 @@ module.exports = {state,
             socket.on('end', () => {
                 state.connections = state.connections.filter(conn => conn !== socket);
                 console.log('Một peer đã ngắt kết nối.');
-                console.log('connection udpate: ', state.connections);
+                // console.log('connection udpate: ', state.connections);
             });
 
             socket.on('close', () => {

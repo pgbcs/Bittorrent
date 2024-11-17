@@ -59,7 +59,7 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
       clearInterval(timer);
       //remove peer from connectedPeer if close
       connectedPeer = connectedPeer.filter(obj => obj.port !== peer.port);
-      console.log("list connected after closed connection: ", connectedPeer);
+      // console.log("list connected after closed connection: ", connectedPeer);
       console.log("cleared timer");
     })
 

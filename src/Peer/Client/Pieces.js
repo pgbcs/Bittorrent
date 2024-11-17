@@ -74,7 +74,7 @@ module.exports = class {
       // Kiểm tra tất cả các piece liên quan đến file
       while (remainingLength > 0) {
         const pieceIndex = startPiece + Math.floor((offset + byteOffset) / PIECE_SIZE);
-        console.log(pieceIndex);
+        // console.log(pieceIndex);
 
         if (!this.havePiece(pieceIndex)) {
           return false;
