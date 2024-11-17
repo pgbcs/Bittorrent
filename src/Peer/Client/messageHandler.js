@@ -85,7 +85,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   }
   
 
-  if (pieces.isDone()) {
+  if (pieces.isDone(torrent)) {
     // const fileDescriptor = fs.openSync(file, 'w');
     // piecesBuffer.forEach((piece, index)=>{
     //   fs.writeSync(fileDescriptor, piece, 0, piece.length, index * torrent.info['piece length']);
@@ -121,6 +121,7 @@ function requestPiece(socket, pieces, queue) {
     
     // console.log("request piece: ", pieces.needed(pieceBlock));
     if (pieces.needed(pieceBlock)) {
+      console.log(`Request piece ${pieceBlock.index} from peer`);
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;
@@ -138,6 +139,7 @@ function requestPiece(socket, pieces, queue) {
  */
 function writeFilesFromPieces(fileInfoList, piecesBuffer, torrent) {
   fileInfoList.forEach(fileInfo => {
+      if(!fileInfo.selected) return;
       const { path: filePath, startPiece, byteOffset, length } = fileInfo;
 
       const dirPath = path.dirname(filePath);

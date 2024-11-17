@@ -32,7 +32,8 @@ module.exports.getFileInfo = function(torrent,basePath ,yourLocation='') {
               path: filePath,
               startPiece: startPiece,
               byteOffset: byteOffsetInPiece,
-              length: fileLength
+              length: fileLength,
+              selected: false
           });
 
           offset += fileLength;
@@ -50,7 +51,8 @@ module.exports.getFileInfo = function(torrent,basePath ,yourLocation='') {
           path: absolutePath,
           startPiece: startPiece,
           byteOffset: byteOffsetInPiece,
-          length: fileLength
+          length: fileLength,
+          selected: false
       });
   }
 

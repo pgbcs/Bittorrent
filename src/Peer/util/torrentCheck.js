@@ -13,10 +13,10 @@ function verifyPiece(pieceBuffer, pieceIndex, torrent) {
 
     // So sánh hash tính được với hash từ torrent
     if (Buffer.compare(pieceHash, expectedHash) === 0) {
-        console.log(`Piece ${pieceIndex} hợp lệ.`);
+        // console.log(`Piece ${pieceIndex} hợp lệ.`);
         return true;
     } else {
-        console.log(`Piece ${pieceIndex} không hợp lệ.`);
+        // console.log(`Piece ${pieceIndex} không hợp lệ.`);
         return false;
     }
 }

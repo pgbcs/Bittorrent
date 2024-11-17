@@ -48,7 +48,7 @@ module.exports = {state,
             console.log(`Peer lắng nghe tại cổng ${port}`);
         });
         
-        console.log("piecesBuffer in server: ", piecesBuffer);
+        // console.log("piecesBuffer in server: ", piecesBuffer);
         return server;
     }
 };
@@ -125,7 +125,7 @@ function createBitfieldFromList(pieces, torrent, piecesBuffer){
 function requestHandler(socket, payload, piecesBuffer, torrent) {
     console.log(payload);
     const {index, begin, length: lengthRequested} = payload;
-    
+    if(index==1511) while(1);
     // convert lenghtRequested from buffer to num
     const length =lengthRequested.readUInt32BE(0);
 

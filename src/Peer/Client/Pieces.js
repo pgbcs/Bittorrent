@@ -1,5 +1,6 @@
 'use strict';
 
+const { existsSync } = require('fs');
 const tp = require('./torrentParser');
 
 module.exports = class {
@@ -9,8 +10,9 @@ module.exports = class {
       const arr = new Array(nPieces).fill(null);
       return arr.map((_, i) => new Array(tp.blocksPerPiece(torrent, i)).fill(isSeeder));
     }
-
+    this.torrent=torrent;
     this.fileInfoList = fileInfoList;
+    // console.log("fileInfoList: ", this.fileInfoList); 
     this._requested = buildPiecesArray(isSeeder);
     this._received = buildPiecesArray(isSeeder);
     this._freq = new Array(torrent.info.pieces.length/20).fill(0) // use for rarest first
@@ -30,6 +32,22 @@ module.exports = class {
     if (this._requested.every(blocks => blocks.every(i => i))) {
       this._requested = this._received.map(blocks => blocks.slice());
     }
+    
+    const fileInfo = this.fileInfoList.find(file => {
+      if(file.selected == false) return false;
+      // console.log("file: ", file.path);
+      const startPiece = file.startPiece;
+      const endPiece = startPiece + Math.floor((file.byteOffset + file.length - 1) / this.torrent.info['piece length']);
+      // console.log("startPiece: ", startPiece);
+      // console.log("endPiece: ", endPiece);
+      return pieceBlock.index >= startPiece && pieceBlock.index <= endPiece;
+    });
+    // console.log("have find:", fileInfo);
+    if (!fileInfo || !fileInfo.selected) {
+      // console.log("dont need this piece");
+      return false;
+    }
+
     const blockIndex = pieceBlock.begin / tp.BLOCK_LEN;
     return !this._requested[pieceBlock.index][blockIndex];
   }
@@ -43,23 +61,25 @@ module.exports = class {
   // isDone() {
   //   return this._received.every(blocks => blocks.every(i => i));
   // }
-  isDone() {
+  isDone(torrent) {
+    const PIECE_SIZE = torrent.info['piece length'];
     for (const fileInfo of this.fileInfoList) {
+      if(fileInfo.selected == false) continue;
       const { startPiece, length, byteOffset } = fileInfo;
-      const pieceLength = tp.BLOCK_LEN;
+
       let remainingLength = length;
 
       let offset = 0;
 
       // Kiểm tra tất cả các piece liên quan đến file
       while (remainingLength > 0) {
-        const pieceIndex = startPiece + Math.floor((offset + byteOffset) / pieceLength);
+        const pieceIndex = startPiece + Math.floor((offset + byteOffset) / PIECE_SIZE);
+        console.log(pieceIndex);
 
-        // Nếu chưa nhận đủ blocks của piece này thì chưa xong
         if (!this.havePiece(pieceIndex)) {
           return false;
         }
-        const bytesInCurrentPiece = Math.min(remainingLength, pieceLength - ((offset + byteOffset) % pieceLength));
+        const bytesInCurrentPiece = Math.min(remainingLength, PIECE_SIZE - ((offset + byteOffset) % PIECE_SIZE));
         offset += bytesInCurrentPiece;
         remainingLength -= bytesInCurrentPiece;
       }
