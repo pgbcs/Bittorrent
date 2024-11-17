@@ -1,10 +1,7 @@
 const path = require('path');
 const readline = require('readline');   
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+
 // Hàm hiển thị cấu trúc thư mục
 function displayFileList(fileInfoList) {
     console.log('Danh sách file:');
@@ -18,7 +15,10 @@ function displayFileList(fileInfoList) {
 function selectFiles(fileInfoList) {
     return new Promise((resolve) => {
         displayFileList(fileInfoList);
-
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
         rl.question('Nhập số thứ tự của file cần chọn (cách nhau bởi dấu phẩy, ví dụ: 1,3,5): ', (answer) => {
             const selections = answer.split(',').map(num => parseInt(num.trim(), 10) - 1);
 

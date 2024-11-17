@@ -34,10 +34,9 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
     console.log("Skip myself");
     return;
   }
-
-  const queue = new Queue(torrent);
   
-
+  const queue = new Queue(torrent);
+  const bitfield = {};
   //check if u have connected to this peer
   if(!connectedPeer.find(obj => obj.port === peer.port)){
     const socket = net.Socket();
@@ -71,8 +70,7 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
       connectedPeer.push(peerConnection);
     });
 
-
-    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer));
+    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield));
   } 
 }
 

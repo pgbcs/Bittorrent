@@ -1,6 +1,5 @@
 'use strict';
 
-const { existsSync } = require('fs');
 const tp = require('./torrentParser');
 
 module.exports = class {

@@ -10,8 +10,6 @@ const state = {
     connections: [],
 };
 
-
-
 module.exports = {state,
     server: (port, torrent, pieces, piecesBuffer) => {
         const server = net.createServer((socket) => {
@@ -156,4 +154,8 @@ function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
     } else {
         console.error(`Requested piece ${index} not found.`);
     }
+}
+
+function Uninterested(){
+    
 }

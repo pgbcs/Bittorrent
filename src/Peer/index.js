@@ -9,8 +9,8 @@ const {selectFiles, displayFileList} = require('./Client/chooseFile');
 
 const args = process.argv.slice(2);
 // const torrentPath = 'bluemew.torrent';
-const torrentPath = 'video.mkv.torrent';
-// const torrentPath = 'Pic4rpCa.torrent';
+// const torrentPath = 'video.mkv.torrent';
+const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 
 const basePath = path.dirname(torrentPath);
