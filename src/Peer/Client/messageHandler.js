@@ -1,6 +1,7 @@
 const message = require('../util/message');
 const fs = require('fs');
-
+const torrentParser = require('../Client/torrentParser');
+const path = require('path');
 module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
@@ -64,12 +65,15 @@ function bitfieldHandler(socket, pieces, queue, payload, peer) {
 
 
 
-function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer){ 
+function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer){
   pieces.addReceived(payload);
   // console.log("data received", payload);
   console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
+  if(!piecesBuffer[payload.index]){
+    piecesBuffer[payload.index] = Buffer.alloc(torrentParser.pieceLen(torrent, payload.index));
+  }
   payload.block.copy(piecesBuffer[payload.index], payload.begin);
   // fs.write(file, payload.block, 0, payload.block.length, offset, () => {});
 
@@ -82,11 +86,12 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   
 
   if (pieces.isDone()) {
-    const fileDescriptor = fs.openSync(file, 'w');
-    piecesBuffer.forEach((piece, index)=>{
-      fs.writeSync(fileDescriptor, piece, 0, piece.length, index * torrent.info['piece length']);
-    })
-    fs.closeSync(fileDescriptor);
+    // const fileDescriptor = fs.openSync(file, 'w');
+    // piecesBuffer.forEach((piece, index)=>{
+    //   fs.writeSync(fileDescriptor, piece, 0, piece.length, index * torrent.info['piece length']);
+    // })
+    // fs.closeSync(fileDescriptor);
+    writeFilesFromPieces(fileInfoList, piecesBuffer, torrent);
     socket.end();
     console.log('DONE!');
     if(timerID){
@@ -100,7 +105,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
 
 function requestPiece(socket, pieces, queue) {
   if (queue.choked) return null;
-
+  // console.log("queue: ", queue._queue);
   while (queue.length()) {
     let pieceBlock = queue.deque();
 
@@ -114,12 +119,70 @@ function requestPiece(socket, pieces, queue) {
       // break;
     }
     
-    // console.log("PieceBlock request: ", pieceBlock);
-
+    // console.log("request piece: ", pieces.needed(pieceBlock));
     if (pieces.needed(pieceBlock)) {
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;
     }
   }
+  
+}
+
+
+/*
+ * Ghi dữ liệu từ `piecesBuffer` vào các file dựa trên danh sách `fileInfoList`.
+ * @param {Array} fileInfoList - Danh sách các file cần ghi.
+ * @param {Buffer[]} piecesBuffer - Mảng chứa các pieces đã tải.
+ * @param {Object} torrent - Thông tin torrent bao gồm độ dài mỗi piece.
+ */
+function writeFilesFromPieces(fileInfoList, piecesBuffer, torrent) {
+  fileInfoList.forEach(fileInfo => {
+      const { path: filePath, startPiece, byteOffset, length } = fileInfo;
+
+      const dirPath = path.dirname(filePath);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`Thư mục đã được tạo: ${dirPath}`);
+      }
+      // Mở file để ghi
+      const fileDescriptor = fs.openSync(filePath, 'w');
+
+      console.log(`Ghi vào file: ${filePath}`);
+
+      let remainingLength = length;
+      let offset = 0;
+
+      while (remainingLength > 0) {
+          const pieceIndex = startPiece + Math.floor((offset+byteOffset) / torrent.info['piece length']);
+          const byteOffsetInPiece = (byteOffset + offset) % torrent.info['piece length'];
+
+          // Kiểm tra nếu piece chưa tồn tại
+          if (!piecesBuffer[pieceIndex]) {
+              console.log(`Piece ${pieceIndex} không tồn tại trong buffer.`);
+              break;
+          }
+
+          // Tính toán phần dữ liệu cần ghi
+          const availableSpaceInPiece = torrent.info['piece length'] - byteOffsetInPiece;
+          const bytesToWrite = Math.min(remainingLength, availableSpaceInPiece);
+
+          // Ghi dữ liệu từ piece vào file
+          fs.writeSync(
+              fileDescriptor,
+              piecesBuffer[pieceIndex],
+              byteOffsetInPiece,
+              bytesToWrite,
+              offset
+          );
+
+          console.log(`Ghi piece ${pieceIndex}, offset ${offset}, bytes ${bytesToWrite}`);
+
+          offset += bytesToWrite;
+          remainingLength -= bytesToWrite;
+      }
+
+      // Đóng file sau khi ghi xong
+      fs.closeSync(fileDescriptor);
+  });
 }

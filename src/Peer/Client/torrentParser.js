@@ -1,10 +1,62 @@
 const fs = require('fs');
 const bencode = require('bencode');
 const crypto = require('crypto');
+const path = require('path');
 
 module.exports.open = (filepath) => {
     return bencode.decode(fs.readFileSync(filepath));
 };
+
+module.exports.getFileInfo = function(torrent,basePath ,yourLocation='') {
+
+  // console.log(torrent.info['files']);
+
+  const info = torrent.info;
+  const pieceLength = info['piece length'];
+  const files = info['files'] || [];
+  // const pieces = info['pieces'];
+
+  const fileInfoList = [];
+
+  if (files.length > 0) {
+      let offset = 0;
+      files.forEach(file => {
+          const filePath = yourLocation + torrent.info['name'].toString()+"/"+file['path'].map(segment => segment.toString()).join(`/`);
+          const fileLength = file['length'];
+
+          // Tính toán vị trí của các piece
+          const startPiece = Math.floor(offset / pieceLength);
+          const byteOffsetInPiece = offset % pieceLength;
+
+          fileInfoList.push({
+              path: filePath,
+              startPiece: startPiece,
+              byteOffset: byteOffsetInPiece,
+              length: fileLength
+          });
+
+          offset += fileLength;
+      });
+  } else {
+      // Trường hợp torrent chỉ có một file
+      const filePath =yourLocation+'/'+ info['name'].toString();
+      
+      const absolutePath = path.resolve(basePath, filePath);
+      const fileLength = info['length'];
+      const startPiece = 0;
+      const byteOffsetInPiece = 0;
+
+      fileInfoList.push({
+          path: absolutePath,
+          startPiece: startPiece,
+          byteOffset: byteOffsetInPiece,
+          length: fileLength
+      });
+  }
+
+  return fileInfoList;
+}
+
 
 module.exports.inforHash = torrent =>{
     const info = bencode.encode(torrent.info);

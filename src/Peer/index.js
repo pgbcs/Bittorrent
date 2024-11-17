@@ -6,60 +6,57 @@ const {server, state} = require('./Server/server');
 const {genPort} = require('./Client/util');
 const Pieces = require('./Client/Pieces');
 const fs = require('fs');
+const path = require('path');
+const {processFiles } = require('./Client/readAndWritePieces');
 
 const args = process.argv.slice(2);
-const torrent = torrentParser.open('video.mkv.torrent');
+const torrentPath = 'bluemew.torrent';
+// const torrentPath = 'video.torrent';
+// const torrentPath = 'Pic4rpCa.torrent';
+const torrent = torrentParser.open(torrentPath);
+
+const basePath = path.dirname(torrentPath);
+
+let clientID ='';
+if(args[0] == 'download'){
+    clientID = args[1];
+}
+const fileInfoList = torrentParser.getFileInfo(torrent ,basePath,`received${clientID}/`);
+
+// fileInfoList.forEach(fileInfo => {
+//     console.log(`Đường dẫn: ${fileInfo.path}`);
+//     console.log(`Piece bắt đầu: ${fileInfo.startPiece}`);
+//     console.log(`Byte bắt đầu trong piece: ${fileInfo.byteOffset}`);
+//     console.log(`Chiều dài file: ${fileInfo.length}`);
+//     console.log('----------------------------------');
+// });
+
 
 let isSeeder = false;
+
 if(args[0]=='seeder'){
     isSeeder =true;
 }
 
-const pieces = new Pieces(torrent, isSeeder);
-const path = `D:/Nam3/Computer Networking/Assignment/Assignment1/Bittorrent/src/Peer/received/video${args[1]? args[1]:''}.mkv`;
+let piecesBuffer, pieces;
+async function processFile() {
+    try {
+        [piecesBuffer, pieces] = await processFiles(fileInfoList, torrent);
+        console.log('pieces: ', pieces);
+        const peerServer = server(genPort(),torrent, pieces, piecesBuffer);
 
-const PIECE_SIZE = torrent.info['piece length'];
-
-console.log(torrent.info);
-//create piece buffer
-const piecesBuffer = []; // Danh sách các piece
-let pieceCount = Math.ceil(torrent.info.length / PIECE_SIZE);
-console.log(pieceCount);
-for (let i = 0; i < pieceCount; i++) {
-    const start = i * PIECE_SIZE;
-    const end = Math.min((i + 1) * PIECE_SIZE, torrent.info.length);
-    const piece = Buffer.alloc(end-start+1);
-    piecesBuffer.push(piece);
-}
-
-// Đọc tệp dưới dạng buffer
-fs.readFile(path, (err, data) => {
-    if (err) {
-        console.log('File cannot be opened or does not exist, skipping.'); 
-        return;
+    if(args[0] == 'download'){
+        download(torrent, pieces,piecesBuffer, fileInfoList, state);
     }
-    
-    console.log('File read successfully!');
-    for (let i = 0; i < pieceCount; i++) {
-        const start = i * PIECE_SIZE;
-        const end = Math.min((i + 1) * PIECE_SIZE, data.length);
-        data.slice(start, end).copy(piecesBuffer[i]);
-        
-        // console.log(`Piece ${i + 1}:`, piecesBuffer[i]);
+    if(args[0] == 'seeder'){
+        tracker.getPeers(torrent,()=>{});
     }
-
-    console.log(`Total pieces: ${piecesBuffer.length}`);
-});
-
-
-
-
-const peerServer = server(genPort(),torrent,pieces,piecesBuffer);
-
-if(args[0] == 'download'){
-    download(torrent, pieces,piecesBuffer, path, state);
+    } catch (error) {
+        console.error('Error processing files:', error);
+    }
 }
-if(args[0] == 'seeder'){
-    tracker.getPeers(torrent,()=>{});
-}
-// console.log(torrent.info);
+
+processFile();
+
+
+

@@ -12,24 +12,24 @@ const minimumPeerNeed = 2;
 
 let connectedPeer = [];
 
-module.exports = (torrent, pieces,piecesBuffer,file, state) => {
+module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
   let timerID = null;
   tracker.getPeers(torrent, (peers) => {
-    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file, state, timerID));
+    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
   });
 
   timerID = setInterval(() => {
     if(connectedPeer.length<minimumPeerNeed){
       console.log("get list peers again");
       tracker.getPeers(torrent, (peers) => {
-        peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, file, state, timerID));
+        peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
       });
     }
   },10000);
 
 };
 
-function download(peer,torrent, pieces, piecesBuffer, file, state, timerID) {
+function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timerID) {
   if (genPort()==peer.port) {
     console.log("Skip myself");
     return;
@@ -72,7 +72,7 @@ function download(peer,torrent, pieces, piecesBuffer, file, state, timerID) {
     });
 
 
-    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer));
+    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer));
   } 
 }
 

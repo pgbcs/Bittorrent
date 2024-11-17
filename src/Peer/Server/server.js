@@ -1,6 +1,7 @@
 const net = require('net');
 const message = require('../util/message');
 const { inforHash } = require('../Client/torrentParser');
+const { verifyPiece } = require('../util/torrentCheck');
 
 // const Buffer = require('buffer').Buffer;
 
@@ -46,7 +47,8 @@ module.exports = {state,
         server.listen(port, () => {
             console.log(`Peer lắng nghe tại cổng ${port}`);
         });
-
+        
+        console.log("piecesBuffer in server: ", piecesBuffer);
         return server;
     }
 };
@@ -58,7 +60,7 @@ function msgHandler(socket, msg, torrent, pieces, piecesBuffer, timeOutId){
         const receivedMsg = parseHandshake(msg);
         if(receivedMsg.inforHash.equals(inforHash(torrent))){
             socket.write(message.buildHandshake(torrent));
-            socket.write(message.buildBitfield(createBitfieldFromList(pieces)));
+            socket.write(message.buildBitfield(createBitfieldFromList(pieces, torrent, piecesBuffer)));
             // console.log("bitfield message will send: ",message.buildBitfield(createBitfieldFromList(pieces)));
             //init state is choked
             chokedPeerList.push({
@@ -105,8 +107,8 @@ function interestedHandler(socket){
     socket.write(message.buildUnchoke());
 }
 
-function createBitfieldFromList(pieces){
-    let bitfield = pieces._received.map(piece => piece.every(el=>el) ? '1' : '0').join('');
+function createBitfieldFromList(pieces, torrent, piecesBuffer){
+    let bitfield = pieces._received.map((piece, index) => piece.every(el=>el) ? verifyPiece(piecesBuffer[index], index, torrent)? '1':'0' : '0').join('');
     //spare zero
     while (bitfield.length % 8 !== 0) { bitfield += '0'; }
     const byteArray = []; 
