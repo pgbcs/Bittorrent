@@ -1,7 +1,7 @@
 const net = require('net');
 const Buffer = require('buffer').Buffer;
 const tracker = require('./tracker');
-const { genID,genPort } = require('./util');
+const { genID,genPort, getIntervalForGetListPeer, setStatus } = require('./util');
 const message = require('../util/message');
 const {msgHandler} = require('./messageHandler');
 const Queue = require('./Queue');
@@ -17,14 +17,19 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
   tracker.getPeers(torrent, (peers) => {
     peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
   });
-
+  setStatus('downloading');
   timerID = setInterval(() => {
-    if(connectedPeer.length<minimumPeerNeed){
-      console.log("get list peers again");
-      tracker.getPeers(torrent, (peers) => {
-        peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
-      });
+    let callback=(peers) => {
+      console.log("handle list peer");
+      peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
+    };
+
+    if(connectedPeer.length>=minimumPeerNeed){
+      callback =()=>{};
     }
+
+    tracker.getPeers(torrent, callback);
+
   },10000);
 
 };

@@ -4,13 +4,14 @@ const torrentParser = require('../Client/torrentParser');
 const path = require('path');
 const readline = require('readline');
 const { selectFiles } = require('./chooseFile');
+const { updateDownloaded, setStatus } = require('./util');
 
 
 
 module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
-        queue.choked = false;
+        // queue.choked = false;
         // console.log("requested: ",pieces._requested);
         // console.log("received: ",pieces._received);
     }
@@ -97,7 +98,7 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 
 function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield){
-
+  updateDownloaded(payload.block.length);
   pieces.addReceived(payload);
   // console.log("data received", piecesBuffer);
   /****************
@@ -126,6 +127,8 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   }
   if (pieces.isDone(torrent)) {
     //spend slot for other peer
+    setStatus("completed");
+
     socket.write(message.buildUninterested());
 
     writeFilesFromPieces(fileInfoList, piecesBuffer, torrent);

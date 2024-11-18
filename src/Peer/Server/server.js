@@ -2,6 +2,7 @@ const net = require('net');
 const message = require('../util/message');
 const { inforHash } = require('../Client/torrentParser');
 const { verifyPiece } = require('../util/torrentCheck');
+const { updateUploaded } = require('../Client/util');
 // const download = require('../Client/download');
 
 // const Buffer = require('buffer').Buffer;
@@ -160,6 +161,7 @@ function requestHandler(socket, payload, piecesBuffer, torrent) {
 
 function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
     const pieceData = piecesBuffer[index]; // Lấy dữ liệu của phần tương ứng
+    updateUploaded(lengthRequested);
     if (pieceData) {
         // Cắt dữ liệu đúng size bắt đầu từ begin
         const dataToSend = pieceData.slice(begin, begin + lengthRequested);

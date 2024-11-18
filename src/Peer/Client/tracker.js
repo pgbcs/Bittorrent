@@ -1,15 +1,16 @@
 const http = require('http');
 const torrentParser = require('./torrentParser');
-const {genID, genPort} = require('./util')
-const net = require('net');
+const {genID, genPort, getDownloaded, getUploaded, getStatus, setIntervalForGetListPeer, getLeft} = require('./util')
 
 
 module.exports.getPeers =async (torrent, callback)=>{
     try{
-        const announceReq = buildAnnounceReq(torrent);
-        const resp = await httpGET('127.0.0.1', 3000, announceReq);
+        const announceReq = buildAnnounceReq(torrent, getStatus(), getDownloaded(), getUploaded(), getLeft(torrent));
+
+        const resp = await httpGET('127.0.0.1', 8888, announceReq);
         
-        callback(JSON.parse(resp));
+        setIntervalForGetListPeer(JSON.parse(resp).interval);
+        callback(JSON.parse(resp).peers);
     }catch (error){
         console.error('Error occurred:', error);
     }
@@ -18,7 +19,6 @@ module.exports.getPeers =async (torrent, callback)=>{
 function httpGET(hostname, port, param) {
     const jsonParam = JSON.stringify(param);
     const url = `http://${hostname}:${port}/?${encodeURIComponent(jsonParam)}`;
-
     return new Promise((resolve, reject) => {
         http.get(url, (res) => {
             let responseData = '';
@@ -38,16 +38,16 @@ function httpGET(hostname, port, param) {
 }
 
 //gen port do chạy cùng máy
-function buildAnnounceReq(torrent, port=genPort()){
+function buildAnnounceReq(torrent,event='started', downloaded = 0, uploaded = 0, left=0, port=genPort()){
     return {
         connection_id: 0x41727101980,
         action: "announce",
         info_hash: torrentParser.inforHash(torrent),
         peer_id: genID(),
-        event: '',
-        downloaded: 0,
-        left: 0,
-        uploaded: 0,
+        event,
+        downloaded,
+        left,
+        uploaded,
         IP_address: '127.0.0.1',
         port,
         num_want:-1,

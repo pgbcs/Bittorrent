@@ -2,16 +2,20 @@ const tracker = require('./Client/tracker');
 const torrentParser = require('./Client/torrentParser');
 const download = require('./Client/download');
 const {server, state} = require('./Server/server');
-const {genPort} = require('./Client/util');
+const {genPort, getIntervalForGetListPeer, setStatus} = require('./Client/util');
 const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
+
 
 const args = process.argv.slice(2);
 const torrentPath = 'bluemew.torrent';
 // const torrentPath = 'video.mkv.torrent';
 // const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
+
+// console.log("torrent:", torrent);
+// console.log("torrent info:", torrent.info);
 
 const basePath = path.dirname(torrentPath);
 
@@ -46,6 +50,11 @@ async function processFile() {
     }
     if(args[0] == 'seeder'){
         tracker.getPeers(torrent,()=>{});
+        
+        setStatus('completed');
+        setInterval(()=>{
+            tracker.getPeers(torrent,()=>{});
+        },getIntervalForGetListPeer());
     }
     } catch (error) {
         console.error('Error processing files:', error);
