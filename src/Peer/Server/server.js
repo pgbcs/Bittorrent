@@ -123,6 +123,7 @@ function keepAliveHandler(socket, timeOutId){
 
 function interestedHandler(socket){
     //TODO: do logic something to decide unchoke or not
+    console.log("received interested msg");
     socket.find(peer => peer.connection === socket).interested = true;
     if(currentUploadSlots<maxUploadSlots){
         socket.find(peer => peer.connection === socket).choked = false;
@@ -182,6 +183,7 @@ function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
 }
 
 function uninterestedHandler(socket){
+    console.log("received uninterested msg");
     const target = state.find(peer => peer.connection === socket);
     target.interested = false;
     if(!target.choked){
@@ -195,7 +197,7 @@ function regularUnchoke(state){
     state.sort((a,b)=>a.uploaded-b.uploaded);
     for(let i=0; i<state.length; i++){
         if(state[i]){
-            if(currentUploadSlots<maxUploadSlots){
+            if(currentUploadSlots<maxUploadSlots&&state[i].interested){
                 state[i].choked = false;
                 state[i].connection.write(message.buildUnchoke());
                 currentUploadSlots++;
@@ -212,6 +214,6 @@ function optimisticUnchoke(state){
     const chokedPeers = state.filter(peer => peer.choked);
     if(chokedPeers.length > 0){
         const randomIndex = Math.floor(Math.random() * chokedPeers.length);
-        chokedPeers[randomIndex].connection.write(message.buildUnchoke());
+        if(chokedPeers.interested) chokedPeers[randomIndex].connection.write(message.buildUnchoke());
     }
 }

@@ -49,7 +49,7 @@ function haveHandler(payload, socket, pieces, queue, peer, bitfield) {
   //update bitfield for re-download
   const pieceIndex = payload.readUInt32BE(0);
   setPieceInBitfield(bitfield, pieceIndex);
-  // console.log(`have piece ${pieceIndex} from peer have ${peer.port}`);
+  console.log(`have piece ${pieceIndex} from peer have ${peer.port}`);
   const queueEmpty = queue.length() === 0;
   queue.queue(pieceIndex, ++pieces._freq[pieceIndex]);
   
@@ -104,7 +104,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   *Use for show download concurrently
     console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   ****************/
-  // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+  console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   if(!piecesBuffer[payload.index]){
@@ -161,7 +161,10 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
 }
 
 function requestPiece(socket, pieces, queue) {
-  if (queue.choked) return null;
+  if (queue.choked) {
+    socket.write(message.buildInterested());
+    return;
+  }
   // console.log("queue: ", queue._queue);
   while (queue.length()) {
     let pieceBlock = queue.deque();
