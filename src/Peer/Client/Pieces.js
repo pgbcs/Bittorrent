@@ -28,9 +28,9 @@ module.exports = class {
   }
 
   needed(pieceBlock) {
-    if (this._requested.every(blocks => blocks.every(i => i))) {
-      this._requested = this._received.map(blocks => blocks.slice());
-    }
+    // if (this._requested.every(blocks => blocks.every(i => i))) {
+    //   this._requested = this._received.map(blocks => blocks.slice());
+    // }
     
     const fileInfo = this.fileInfoList.find(file => {
       if(file.selected == false) return false;
@@ -39,6 +39,12 @@ module.exports = class {
       const endPiece = startPiece + Math.floor((file.byteOffset + file.length - 1) / this.torrent.info['piece length']);
       // console.log("startPiece: ", startPiece);
       // console.log("endPiece: ", endPiece);
+      for (let pieceIndex = startPiece; pieceIndex <= endPiece; pieceIndex++) {
+        if (this._requested[pieceIndex].every(block => block)) {
+            // Nếu tất cả các blocks của piece đã được yêu cầu, sao chép từ _received
+            this._requested[pieceIndex] = this._received[pieceIndex].slice();
+        }
+      }
       return pieceBlock.index >= startPiece && pieceBlock.index <= endPiece;
     });
     // console.log("have find:", fileInfo);

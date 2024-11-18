@@ -10,14 +10,18 @@ const { selectFiles } = require('./chooseFile');
 module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
+        queue.choked = false;
+        // console.log("requested: ",pieces._requested);
+        // console.log("received: ",pieces._received);
     }
     else {
       const m = message.parse(msg);
       // console.log("message:", m);console.log(piecesBuffer);
       // console.log(piecesBuffer);
-      if (m.id === 0) chokeHandler(socket);
+      // console.log(peer.peerId);
+      if (m.id === 0) chokeHandler(queue);
       if (m.id === 1) unchokeHandler(socket, pieces,queue);
-      if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer);
+      if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer, bitfield);
       if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload, peer, bitfield);
       if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer, bitfield);
     }
@@ -28,7 +32,7 @@ function isHandshake(msg) {
   return msg.length === msg.readUInt8(0) + 49 &&
       msg.slice(0,20).toString('utf8', 1) === 'BitTorrent protocol';
 }
-function chokeHandler(socket) {
+function chokeHandler(queue) {
   console.log("get choked");
   queue.choked = true;
 }
@@ -40,15 +44,29 @@ function unchokeHandler(socket, pieces, queue) {
   requestPiece(socket, pieces, queue);
 }
   
-function haveHandler(payload, socket, pieces, queue, peer) {
+function haveHandler(payload, socket, pieces, queue, peer, bitfield) {
+  // console.log("received have message");
+  //update bitfield for re-download
   const pieceIndex = payload.readUInt32BE(0);
+  setPieceInBitfield(bitfield, pieceIndex);
+  // console.log(`have piece ${pieceIndex} from peer have ${peer.port}`);
   const queueEmpty = queue.length() === 0;
   queue.queue(pieceIndex, ++pieces._freq[pieceIndex]);
   
   // console.log(`queue for peer have socket ${peer.port}:`, queue._queue);
+  // console.log('queue empty:', queueEmpty);
   if (queueEmpty) requestPiece(socket, pieces, queue);
 }
-  
+
+function setPieceInBitfield(bitfield, pieceIndex) {
+  // Tính toán byteIndex và bitOffset
+  const byteIndex = Math.floor(pieceIndex / 8);
+  const bitOffset = pieceIndex % 8;
+
+  // Cập nhật bit tương ứng thành 1
+  bitfield.value[byteIndex] |= (1 << (7 - bitOffset)); // Đặt bit từ trái sang phải
+}
+
 function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
   const queueEmpty = queue.length() === 0;
   bitfield.value = payload;
@@ -63,12 +81,13 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
       byte = Math.floor(byte / 2);
     }
   });
-  console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
+  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
   if (queueEmpty) requestPiece(socket, pieces, queue);
   //send interested 
   if(isInterested){
     socket.write(message.buildInterested());
-    console.log("send interested");}
+    // console.log("send interested");
+  }
   else{
     socket.write(message.buildUninterested());
   }
@@ -78,12 +97,14 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 
 function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield){
+
   pieces.addReceived(payload);
   // console.log("data received", piecesBuffer);
   /****************
   *Use for show download concurrently
     console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   ****************/
+  // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   if(!piecesBuffer[payload.index]){
@@ -94,13 +115,19 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
 
   //annouce for every peer is connecting know about new piece block you have
   if(pieces.havePiece(payload.index)){
-    state.connections.forEach((connect)=>{
-      connect.write(message.buildHave(payload.index));
+    state.forEach((st)=>{
+      st.connection.write(message.buildHave(payload.index));
     })
   }
-  
-
+  //use for measure upload speed with this socket
+  const PeerUpload = state.find(obj => Buffer.compare(obj.peerId, Buffer.from(peer.peer_id.data))===0);
+  if(PeerUpload){
+    PeerUpload.uploaded += payload.block.length;
+  }
   if (pieces.isDone(torrent)) {
+    //spend slot for other peer
+    socket.write(message.buildUninterested());
+
     writeFilesFromPieces(fileInfoList, piecesBuffer, torrent);
     // socket.end();
     console.log('DONE!');
@@ -111,7 +138,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
     });
     rl1.question('Do you want to download more? (y/n)', (answer) => {
       if(answer === 'y'){
-        console.log("bitfield: ", bitfield);
+        // console.log("bitfield: ", bitfield);
         rl1.close();
         async function run(fileInfoList, bitfieldHandler, socket, pieces, queue, payload, peer, bitfield) {
           await selectFiles(fileInfoList); // Đợi người dùng nhập liệu xong
@@ -149,7 +176,7 @@ function requestPiece(socket, pieces, queue) {
       // break;
     }
     
-    // console.log("request piece: ", pieces.needed(pieceBlock));
+    // console.log(`request piece ${pieceBlock.index}: , ${pieces.needed(pieceBlock)}`);
     if (pieces.needed(pieceBlock)) {
       // console.log(`Request piece ${pieceBlock.index} from peer`);
       socket.write(message.buildRequest(pieceBlock));

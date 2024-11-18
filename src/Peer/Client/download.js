@@ -36,7 +36,7 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
   }
   
   const queue = new Queue(torrent);
-  const bitfield = {};
+  const bitfield = {};// cập nhật lại bitfield khi nhận được have msg 
   //check if u have connected to this peer
   if(!connectedPeer.find(obj => obj.port === peer.port)){
     const socket = net.Socket();
