@@ -1,6 +1,7 @@
 const http = require('http');
 const torrentParser = require('./torrentParser');
-const {genID, genPort, getDownloaded, getUploaded, getStatus, setIntervalForGetListPeer, getLeft} = require('./util')
+const {genID, genPort, getDownloaded, getUploaded, getStatus, setIntervalForGetListPeer, getLeft} = require('./util');
+const { info } = require('console');
 
 
 module.exports.getPeers =async (torrent, callback)=>{
@@ -15,6 +16,16 @@ module.exports.getPeers =async (torrent, callback)=>{
         console.error('Error occurred:', error);
     }
 }
+
+module.exports.scrape = async (torrent) => {
+    try {
+        const scrapeReq = buildScrapeReq(torrent);
+        const resp = await httpGET('127.0.0.1', 8888, scrapeReq);
+        console.log('Scrape response:', resp);
+    }catch (error){
+        console.error('Error occurred:', error);
+    }
+};
 
 function httpGET(hostname, port, param) {
     const jsonParam = JSON.stringify(param);
@@ -53,5 +64,12 @@ function buildAnnounceReq(torrent,event='started', downloaded = 0, uploaded = 0,
         num_want:-1,
         transaction_id: 0x88,
         compact: 0,
+    }
+}
+
+function buildScrapeReq(torrent){
+    return {
+        action: 'scrape',
+        info_hash: torrentParser.inforHash(torrent),
     }
 }

@@ -5,6 +5,7 @@ const hostname = '127.0.0.1'; // Server IP address
 const port = 8888; // Server port
 const timeOut = 15*1000; // 15 seconds
 const maxPeerResponse = 30;
+let downloadedForScrape =0;
 
 const trackerDatabase={
     torrents:{}, 
@@ -31,17 +32,21 @@ const server = http.createServer((req, res) => {
                     left,
                     last_announce: Date.now(),
                 };
-                if(!trackerDatabase.torrents[info_hash]){
-                    trackerDatabase.torrents[info_hash] = [];
+                if(!trackerDatabase.torrents[info_hash.data]){
+                    trackerDatabase.torrents[info_hash.data] = [];
                 }
-                trackerDatabase.torrents[info_hash].push(newPeer);
+
+                trackerDatabase.torrents[info_hash.data].push(newPeer);
             }
             else if(event === 'stopped'){
-                trackerDatabase.torrents[info_hash] = trackerDatabase.torrents[info_hash].filter(peer=>peer.peer_id !== peer_id);
+                trackerDatabase.torrents[info_hash.data] = trackerDatabase.torrents[info_hash.data].filter(peer=>peer.peer_id !== peer_id);
             }
             else {
-                trackerDatabase.torrents[info_hash].forEach(peer => {
+                trackerDatabase.torrents[info_hash.data].forEach(peer => {
                     if(Buffer.compare(Buffer.from(peer.peer_id),Buffer.from(peer_id.data))==0){
+                        if(event === 'completed'&&peer.status !== 'completed'){
+                            downloadedForScrape++;
+                        }
                         peer.status = event;
                         peer.downloaded = downloaded;
                         peer.uploaded = uploaded;
@@ -56,16 +61,12 @@ const server = http.createServer((req, res) => {
                 });
             }
             console.log('trackerDatabase:', trackerDatabase);
-            //use for test
-            // if(!trackList.find(obj => obj.port === port)){
-            //     trackList.push(newPeer);
-            // }
-            //return list peer for client
+
             const respone = {
                 interval: 10000,
-                complete: trackerDatabase.torrents[info_hash].filter(peer=>peer.status === 'completed').length,//number of completed
-                incomplete: trackerDatabase.torrents[info_hash].filter(peer=>peer.status !== 'completed').length,//number of incomplete
-                peers: getRandomPeers(trackerDatabase.torrents[info_hash].map(peer=>({
+                complete: trackerDatabase.torrents[info_hash.data].filter(peer=>peer.status === 'completed').length,//number of completed
+                incomplete: trackerDatabase.torrents[info_hash.data].filter(peer=>peer.status !== 'completed').length,//number of incomplete
+                peers: getRandomPeers(trackerDatabase.torrents[info_hash.data].map(peer=>({
                     peer_id: peer.peer_id,
                     IP_address: peer.IP_address,
                     port: peer.port,
@@ -73,6 +74,23 @@ const server = http.createServer((req, res) => {
             };
             res.end(JSON.stringify(respone));
         } 
+        else if(action === 'scrape'){
+            const {info_hash} = paramsObj;
+            // console.log("info_hash: ", info_hash.data);
+            if(trackerDatabase.torrents[info_hash.data]){
+                const respone = {
+                    downloaded: downloadedForScrape,
+                    complete: trackerDatabase.torrents[info_hash.data].filter(peer=>peer.status === 'completed').length,//number of completed
+                    incomplete: trackerDatabase.torrents[info_hash.data].filter(peer=>peer.status !== 'completed').length,//number of incomplete
+                };
+                res.end(JSON.stringify(respone));
+            }
+            else{
+                res.statusCode = 404;
+                res.setHeader('Content-Type', 'text/plain');
+                res.end('Not Found\n');
+            }
+        }
         else{
             res.statusCode = 400; // Bad Request
             res.setHeader('Content-Type', 'text/plain');
@@ -90,7 +108,7 @@ server.listen(port, hostname, () => {
     setInterval(()=>{
        for(const torrent in trackerDatabase.torrents){
            trackerDatabase.torrents[torrent] = trackerDatabase.torrents[torrent].filter(peer=>Date.now()-peer.last_announce<timeOut);
-           console.log(`tracker after clear: `, trackerDatabase);
+        //    console.log(`tracker after clear: `, trackerDatabase);
        } 
     }, timeOut);
 });

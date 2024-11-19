@@ -31,6 +31,7 @@ let isSeeder = false;
 if(args[0]=='seeder'){
     isSeeder =true;
 }
+tracker.scrape(torrent);
 
 let piecesBuffer, pieces;
 async function processFile() {
