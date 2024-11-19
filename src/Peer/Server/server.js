@@ -3,15 +3,17 @@ const message = require('../util/message');
 const { inforHash } = require('../Client/torrentParser');
 const { verifyPiece } = require('../util/torrentCheck');
 const { updateUploaded } = require('../Client/util');
+
 // const download = require('../Client/download');
 
 // const Buffer = require('buffer').Buffer;
 
-let state = [];
+let state = {};
 const maxUploadSlots = 3;
-let currentUploadSlots = 0;
+let currentUploadSlots = {};
 module.exports = {state,
     server: (port, torrent, pieces, piecesBuffer) => {
+        currentUploadSlots[inforHash(torrent)] = 0;
         const server = net.createServer((socket) => {
             console.log('Một peer mới đã kết nối.');
 
@@ -29,13 +31,13 @@ module.exports = {state,
 
             // Xử lý khi một peer ngắt kết nối
             socket.on('end', () => {
-                state = state.filter(st => st.connection !== socket);
+                state[inforHash(torrent)] = state[inforHash(torrent)].filter(st => st.connection !== socket);
                 console.log('Một peer đã ngắt kết nối.');
                 // console.log('connection udpate: ', state.connections);
             });
 
             socket.on('close', () => {
-                state = state.filter(st => st.connection !== socket);
+                state[inforHash(torrent)] = state[inforHash(torrent)].filter(st => st.connection !== socket);
                 clearTimeout(timeOutId);
             });
             // Xử lý lỗi
@@ -46,17 +48,24 @@ module.exports = {state,
 
         server.listen(port, () => {
             console.log(`Peer lắng nghe tại cổng ${port}`);
+            state[inforHash(torrent)] = [];
             //regular unchoke every 10s
             setInterval(() => {
-                regularUnchoke(state);
+                regularUnchoke(state[inforHash(torrent)], torrent);
             }, 10000);
             //optimistic unchoke every 30s
             setInterval(() => {
-                optimisticUnchoke(state);
-                state.forEach((peer) => {
+                optimisticUnchoke(state[inforHash(torrent)]);
+                state[inforHash(torrent)].forEach((peer) => {
                     peer.uploaded = 0;//reset uploaded
                 });
             }, 30000);
+            // setInterval(() => {
+            //     state[inforHash(torrent)].forEach((peer) => {
+            //         console.log(`uploaded from peer ${peer.peerId}:`, peer.uploaded);
+            //     });
+            // }, 5000);
+
         });
         
         // console.log("piecesBuffer in server: ", piecesBuffer);
@@ -84,8 +93,9 @@ function msgHandler(socket, msg, torrent, pieces, piecesBuffer, timeOutId, state
                 choked: true,
                 interested: false,
             }
-            
-            state.push(newPeer);
+            if(!state[inforHash(torrent)]) state[inforHash(torrent)] = [];
+
+            state[inforHash(torrent)].push(newPeer);
         }
         else{
             console.log('Info hash does not match, terminating connection.');
@@ -95,8 +105,8 @@ function msgHandler(socket, msg, torrent, pieces, piecesBuffer, timeOutId, state
     else{
         const m = message.parse(msg);
         if(m.size == 0) keepAliveHandler(socket, timeOutId);
-        if(m.id == 2) interestedHandler(socket);
-        if(m.id == 3) uninterestedHandler(socket);
+        if(m.id == 2) interestedHandler(socket, torrent);
+        if(m.id == 3) uninterestedHandler(socket, torrent);
         if(m.id == 6) requestHandler(socket, m.payload, piecesBuffer, state);
     }
 }
@@ -122,14 +132,15 @@ function keepAliveHandler(socket, timeOutId){
     },2*60*1000);
 }
 
-function interestedHandler(socket){
+function interestedHandler(socket, torrent){
     //TODO: do logic something to decide unchoke or not
     console.log("received interested msg");
-    socket.find(peer => peer.connection === socket).interested = true;
-    if(currentUploadSlots<maxUploadSlots){
-        socket.find(peer => peer.connection === socket).choked = false;
+    state[inforHash(torrent)].find(peer => peer.connection === socket).interested = true;
+    // console.log('current upload slot: ',currentUploadSlots[inforHash(torrent)]);/
+    if(currentUploadSlots[inforHash(torrent)]<maxUploadSlots){
+        state[inforHash(torrent)].find(peer => peer.connection === socket).choked = false;
         socket.write(message.buildUnchoke());
-        currentUploadSlots++;
+        currentUploadSlots[inforHash(torrent)]++;
     }
 }
 
@@ -159,9 +170,9 @@ function requestHandler(socket, payload, piecesBuffer, torrent) {
     sendPiece(socket, index, begin, length, piecesBuffer, torrent);
 }
 
-function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
+function sendPiece(socket, index, begin, lengthRequested, piecesBuffer, torrent) {
     const pieceData = piecesBuffer[index]; // Lấy dữ liệu của phần tương ứng
-    updateUploaded(lengthRequested);
+    updateUploaded(torrent, lengthRequested);
     if (pieceData) {
         // Cắt dữ liệu đúng size bắt đầu từ begin
         const dataToSend = pieceData.slice(begin, begin + lengthRequested);
@@ -184,25 +195,25 @@ function sendPiece(socket, index, begin, lengthRequested, piecesBuffer) {
     }
 }
 
-function uninterestedHandler(socket){
+function uninterestedHandler(socket, torrent){
     console.log("received uninterested msg");
-    const target = state.find(peer => peer.connection === socket);
+    const target = state[inforHash(torrent)].find(peer => peer.connection === socket);
     target.interested = false;
     if(!target.choked){
         target.connection.write(message.buildChoke());
-        currentUploadSlots--;
+        currentUploadSlots[inforHash(torrent)]--;
     }
 }
 
-function regularUnchoke(state){
-    currentUploadSlots = 0;
+function regularUnchoke(state, torrent){
+    currentUploadSlots[inforHash(torrent)] = 0;
     state.sort((a,b)=>a.uploaded-b.uploaded);
     for(let i=0; i<state.length; i++){
         if(state[i]){
-            if(currentUploadSlots<maxUploadSlots&&state[i].interested){
+            if(currentUploadSlots[inforHash(torrent)]<maxUploadSlots&&state[i].interested){
                 state[i].choked = false;
                 state[i].connection.write(message.buildUnchoke());
-                currentUploadSlots++;
+                currentUploadSlots[inforHash(torrent)]++;
             }
             else{
                 state[i].choked = true;

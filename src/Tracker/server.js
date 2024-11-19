@@ -1,11 +1,11 @@
-const { time } = require('console');
+const { time, info } = require('console');
 const http = require('http');
 
 const hostname = '127.0.0.1'; // Server IP address
 const port = 8888; // Server port
 const timeOut = 15*1000; // 15 seconds
 const maxPeerResponse = 30;
-let downloadedForScrape =0;
+let downloadedForScrape = {};
 
 const trackerDatabase={
     torrents:{}, 
@@ -32,10 +32,11 @@ const server = http.createServer((req, res) => {
                     left,
                     last_announce: Date.now(),
                 };
+                
                 if(!trackerDatabase.torrents[info_hash.data]){
                     trackerDatabase.torrents[info_hash.data] = [];
                 }
-
+                
                 trackerDatabase.torrents[info_hash.data].push(newPeer);
             }
             else if(event === 'stopped'){
@@ -45,13 +46,15 @@ const server = http.createServer((req, res) => {
                 trackerDatabase.torrents[info_hash.data].forEach(peer => {
                     if(Buffer.compare(Buffer.from(peer.peer_id),Buffer.from(peer_id.data))==0){
                         if(event === 'completed'&&peer.status !== 'completed'){
-                            downloadedForScrape++;
+                            if(!downloadedForScrape[info_hash.data]){downloadedForScrape[info_hash.data] = 0;}
+                            downloadedForScrape[info_hash.data]++;
                         }
                         peer.status = event;
                         peer.downloaded = downloaded;
                         peer.uploaded = uploaded;
                         peer.left = left;
                         peer.last_announce = Date.now();
+                        // console.log("peer request: ", peer);
                     }
                     // else{
                     //     console.log("peer_id: ", peer_id.data);

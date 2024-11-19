@@ -2,16 +2,17 @@ const tracker = require('./Client/tracker');
 const torrentParser = require('./Client/torrentParser');
 const download = require('./Client/download');
 const {server, state} = require('./Server/server');
-const {genPort, getIntervalForGetListPeer, setStatus} = require('./Client/util');
+const {genPort, getIntervalForGetListPeer, setStatus, getStatus} = require('./Client/util');
 const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
 
 
+
 const args = process.argv.slice(2);
-const torrentPath = 'bluemew.torrent';
+// const torrentPath = 'bluemew.torrent';
 // const torrentPath = 'video.mkv.torrent';
-// const torrentPath = 'Pic4rpCa.torrent';
+const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 
 // console.log("torrent:", torrent);
@@ -38,7 +39,7 @@ async function processFile() {
     try {
         [piecesBuffer, pieces] = await processFiles(fileInfoList, torrent);
         // console.log('pieces: ', pieces);
-        const peerServer = server(genPort(),torrent, pieces, piecesBuffer);
+        const peerServer = server(genPort(torrent),torrent, pieces, piecesBuffer);
 
     if(args[0] == 'download'){
         (async () => {
@@ -52,17 +53,15 @@ async function processFile() {
     if(args[0] == 'seeder'){
         tracker.getPeers(torrent,()=>{});
         
-        setStatus('completed');
+        setStatus(torrent,'completed');
+        // console.log('status:',getStatus(torrent));
+        // console.log(getIntervalForGetListPeer(torrent));
         setInterval(()=>{
             tracker.getPeers(torrent,()=>{});
-        },getIntervalForGetListPeer());
+        },getIntervalForGetListPeer(torrent));
     }
     } catch (error) {
         console.error('Error processing files:', error);
     }
 }
-
 processFile();
-
-
-

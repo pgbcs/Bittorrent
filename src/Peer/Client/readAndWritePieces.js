@@ -41,7 +41,7 @@ function readFileAndWritePieces(fileInfo, torrent, piecesBuffer, pieces, pieceCo
                     offset,
                     offset + bytesToWrite
                 );
-                
+                // console.log("verifyPiece: ", verifyPiece(piecesBuffer[pieceIndex], pieceIndex, torrent));
                 if(verifyPiece(piecesBuffer[pieceIndex], pieceIndex, torrent)){
                     pieces.receivedPiece(pieceIndex);
                 }
@@ -62,5 +62,6 @@ module.exports.processFiles = async function (fileInfoList, torrent) {
 
     const readPromises = fileInfoList.map(fileInfo => readFileAndWritePieces(fileInfo, torrent, piecesBuffer, pieces, pieceCount)); 
     await Promise.all(readPromises);
+    // console.log("pieces: ", pieces._received);
     return [piecesBuffer, pieces];
 }

@@ -15,7 +15,7 @@ module.exports.buildHandshake = torrent => {
   // info hash
   torrentParser.inforHash(torrent).copy(buf, 28);
   // peer id
-  util.genID().copy(buf,48);
+  util.genID(torrent).copy(buf,48);
 //   buf.write(util.genID());
   return buf;
 };

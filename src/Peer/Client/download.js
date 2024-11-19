@@ -5,26 +5,32 @@ const { genID,genPort, getIntervalForGetListPeer, setStatus } = require('./util'
 const message = require('../util/message');
 const {msgHandler} = require('./messageHandler');
 const Queue = require('./Queue');
+const { inforHash } = require('./torrentParser');
+
 
 // let pieces = {};
 
 const minimumPeerNeed = 2;
 
-let connectedPeer = [];
+let connectedPeer = {}
 
 module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
+  if(!connectedPeer[inforHash(torrent)]){ 
+    connectedPeer[inforHash(torrent)] = [];
+  }
   let timerID = null;
+  setStatus(torrent, 'started');
   tracker.getPeers(torrent, (peers) => {
     peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
   });
-  setStatus('downloading');
+  setStatus(torrent,'downloading');
   timerID = setInterval(() => {
     let callback=(peers) => {
       console.log("handle list peer");
       peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
     };
 
-    if(connectedPeer.length>=minimumPeerNeed){
+    if(connectedPeer[inforHash(torrent)].length>=minimumPeerNeed){
       callback =()=>{};
     }
 
@@ -35,7 +41,7 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
 };
 
 function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timerID) {
-  if (genPort()==peer.port) {
+  if (genPort(torrent)==peer.port) {
     console.log("Skip myself");
     return;
   }
@@ -43,9 +49,8 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
   const queue = new Queue(torrent);
   const bitfield = {};// cập nhật lại bitfield khi nhận được have msg 
   //check if u have connected to this peer
-  if(!connectedPeer.find(obj => obj.port === peer.port)){
+  if(!connectedPeer[inforHash(torrent)].find(obj => obj.port === peer.port)){
     const socket = net.Socket();
-    
 
     //keep connection
     const timer = setInterval(()=>{
@@ -55,14 +60,14 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
     socket.on('error', (err) => {
       console.error('Socket error:', err);
       //remove peer from connectedPeer if error
-      connectedPeer = connectedPeer.filter(obj => obj.port !== peer.port);
+      connectedPeer[inforHash(torrent)] = connectedPeer[inforHash(torrent)].filter(obj => obj.port !== peer.port);
       clearInterval(timer); // Xóa timer khi có lỗi
     });
 
     socket.on('close', ()=>{
       clearInterval(timer);
       //remove peer from connectedPeer if close
-      connectedPeer = connectedPeer.filter(obj => obj.port !== peer.port);
+      connectedPeer[inforHash(torrent)] = connectedPeer[inforHash(torrent)].filter(obj => obj.port !== peer.port);
       // console.log("list connected after closed connection: ", connectedPeer);
       console.log("cleared timer");
     })
@@ -72,7 +77,7 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
       //push peer to connectedPeer if connected
       const peerConnection = peer;
   
-      connectedPeer.push(peerConnection);
+      connectedPeer[inforHash(torrent)].push(peerConnection);
     });
 
     onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield));

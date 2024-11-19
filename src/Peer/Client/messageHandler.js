@@ -87,7 +87,6 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
   //send interested 
   if(isInterested){
     socket.write(message.buildInterested());
-    // console.log("send interested");
   }
   else{
     socket.write(message.buildUninterested());
@@ -98,7 +97,7 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 
 function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield){
-  updateDownloaded(payload.block.length);
+  updateDownloaded(torrent, payload.block.length);
   pieces.addReceived(payload);
   // console.log("data received", piecesBuffer);
   /****************
@@ -116,18 +115,18 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
 
   //annouce for every peer is connecting know about new piece block you have
   if(pieces.havePiece(payload.index)){
-    state.forEach((st)=>{
+    state[torrentParser.inforHash(torrent)].forEach((st)=>{
       st.connection.write(message.buildHave(payload.index));
     })
   }
   //use for measure upload speed with this socket
-  const PeerUpload = state.find(obj => Buffer.compare(obj.peerId, Buffer.from(peer.peer_id.data))===0);
+  const PeerUpload = state[torrentParser.inforHash(torrent)].find(obj => Buffer.compare(obj.peerId, Buffer.from(peer.peer_id.data))===0);
   if(PeerUpload){
     PeerUpload.uploaded += payload.block.length;
   }
   if (pieces.isDone(torrent)) {
     //spend slot for other peer
-    setStatus("completed");
+    setStatus(torrent, "completed");
 
     socket.write(message.buildUninterested());
 
@@ -164,7 +163,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
 }
 
 function requestPiece(socket, pieces, queue) {
-  if (queue.choked) {
+  if (queue.length()>0&&queue.choked) {
     socket.write(message.buildInterested());
     return;
   }

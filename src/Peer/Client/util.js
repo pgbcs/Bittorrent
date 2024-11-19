@@ -1,57 +1,70 @@
 const crypto = require('crypto');
-let id = null;
-let port = null;
-let uploaded = 0;
-let downloaded = 0;
-let status = 'started';
-let interval = 10000;
+const { inforHash } = require('./torrentParser');
+
+let id = {};
+let port = {};
+let uploaded = {};
+let downloaded = {};
+let status = {};
+let interval = {};
+
 // Generate ID: http://www.bittorrent.org/beps/bep_0020.html
-module.exports.genID = () => {
-    if (!id) {
-        id = crypto.randomBytes(20);
-        Buffer.from('-BT0001-').copy(id, 0);
+module.exports.genID = (torrent) => {
+    if (!id[inforHash(torrent)]) {
+        id[inforHash(torrent)] = crypto.randomBytes(20);
+        Buffer.from('-BT0001-').copy(id[inforHash(torrent)], 0);
     }
-    return id;
+    return id[inforHash(torrent)];
 };
 
 
-module.exports.genPort=()=>{
-    if (!port) {
+module.exports.genPort=(torrent)=>{
+    if (!port[inforHash(torrent)]) {
         const min = 6000;
         const max = 7000;
-        port= Math.floor(Math.random() * (max - min + 1)) + min;
+        port[inforHash(torrent)]= Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    return port;
+    return port[inforHash(torrent)];
 }
 
-module.exports.updateUploaded = (value) => {
-    uploaded += value;
+module.exports.updateUploaded = (torrent,value) => {
+    uploaded[inforHash(torrent)] += value;
 }
-module.exports.updateDownloaded = (value) => {
-    downloaded += value;
+module.exports.updateDownloaded = (torrent,value) => {
+    downloaded[inforHash(torrent)] += value;
 }
-module.exports.getUploaded = () => {
-    return uploaded;
+module.exports.getUploaded = (torrent) => {
+    if(uploaded[inforHash(torrent)]){
+        uploaded[inforHash(torrent)] = 0;
+    }
+    return uploaded[inforHash(torrent)];
 }
-module.exports.getDownloaded = () => {  
-    return downloaded;
+module.exports.getDownloaded = (torrent) => { 
+    if(!downloaded[inforHash(torrent)]){
+        downloaded[inforHash(torrent)] = 0;
+    } 
+    return downloaded[inforHash(torrent)];
 }
 
 module.exports.getLeft=(torrent)=>{
-    return torrent.info.length - downloaded;
+    return torrent.info.length - downloaded[inforHash(torrent)];
 }
 
-module.exports.setStatus=(value)=>{
-    status = value;
+module.exports.setStatus=(torrent, value)=>{
+    status[inforHash(torrent)] = value;
 }
 
-module.exports.getStatus=()=>{
-    return status;
+module.exports.getStatus=(torrent)=>{
+    return status[inforHash(torrent)];
 }
 
-module.exports.getIntervalForGetListPeer=()=>{
-    return interval;
+module.exports.getIntervalForGetListPeer=(torrent)=>{
+    if(!interval[inforHash(torrent)]){
+        interval[inforHash(torrent)] = 10000;
+    }
+    // console.log("interval: ", interval[inforHash(torrent)]);
+    return interval[inforHash(torrent)];
 }
-module.exports.setIntervalForGetListPeer=(value)=>{    
-    interval = value;
+module.exports.setIntervalForGetListPeer=(torrent,value)=>{    
+    interval[inforHash(torrent)] = value;
 }
