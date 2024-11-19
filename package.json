@@ -22,8 +22,11 @@
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.3.1",
     "bencode": "^0.9.0",
+    "body-parser": "^1.20.3",
     "buffer": "^6.0.3",
+    "cli-progress": "^3.12.0",
     "crypto-js": "^4.2.0",
+    "express": "^4.21.1",
     "fs": "^0.0.1-security",
     "parse-torrent": "^11.0.17",
     "url": "^0.11.4"

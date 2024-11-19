@@ -5,6 +5,7 @@ const path = require('path');
 const readline = require('readline');
 const { selectFiles } = require('./chooseFile');
 const { updateDownloaded, setStatus } = require('./util');
+const { updateProgressBar } = require('./progress');
 
 
 
@@ -54,7 +55,7 @@ function haveHandler(payload, socket, pieces, queue, peer, bitfield) {
   const queueEmpty = queue.length() === 0;
   queue.queue(pieceIndex, ++pieces._freq[pieceIndex]);
   
-  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue);
+  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
   // console.log('queue empty:', queueEmpty);
   if (queueEmpty) requestPiece(socket, pieces, queue);
 }
@@ -82,11 +83,11 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
       byte = Math.floor(byte / 2);
     }
   });
-  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
+  console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
   if (queueEmpty) requestPiece(socket, pieces, queue);
   //send interested 
   if(isInterested){
-    socket.write(message.buildInterested());
+    // socket.write(message.buildInterested());
   }
   else{
     socket.write(message.buildUninterested());
@@ -98,13 +99,14 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield){
   updateDownloaded(torrent, payload.block.length);
+  // updateProgressBar(fileInfoList, payload.block.length, torrent);
   pieces.addReceived(payload);
   // console.log("data received", piecesBuffer);
   /****************
   *Use for show download concurrently
     console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   ****************/
-  console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+  // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   //write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   if(!piecesBuffer[payload.index]){
@@ -118,6 +120,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
     state[torrentParser.inforHash(torrent)].forEach((st)=>{
       st.connection.write(message.buildHave(payload.index));
     })
+    // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   }
   //use for measure upload speed with this socket
   const PeerUpload = state[torrentParser.inforHash(torrent)].find(obj => Buffer.compare(obj.peerId, Buffer.from(peer.peer_id.data))===0);
@@ -127,7 +130,6 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   if (pieces.isDone(torrent)) {
     //spend slot for other peer
     setStatus(torrent, "completed");
-
     socket.write(message.buildUninterested());
 
     writeFilesFromPieces(fileInfoList, piecesBuffer, torrent);
@@ -164,6 +166,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
 
 function requestPiece(socket, pieces, queue) {
   if (queue.length()>0&&queue.choked) {
+    console.log("queue choked");
     socket.write(message.buildInterested());
     return;
   }

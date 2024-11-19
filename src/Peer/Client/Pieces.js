@@ -82,6 +82,7 @@ module.exports = class {
         // console.log(pieceIndex);
 
         if (!this.havePiece(pieceIndex)) {
+          // console.log("thiếu piece: ", pieceIndex);
           return false;
         }
         const bytesInCurrentPiece = Math.min(remainingLength, PIECE_SIZE - ((offset + byteOffset) % PIECE_SIZE));

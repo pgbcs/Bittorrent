@@ -1,4 +1,3 @@
-const { time, info } = require('console');
 const http = require('http');
 
 const hostname = '127.0.0.1'; // Server IP address
@@ -32,7 +31,7 @@ const server = http.createServer((req, res) => {
                     left,
                     last_announce: Date.now(),
                 };
-                
+
                 if(!trackerDatabase.torrents[info_hash.data]){
                     trackerDatabase.torrents[info_hash.data] = [];
                 }
