@@ -39,11 +39,13 @@ function chokeHandler(queue) {
   queue.choked = true;
 }
 
-function unchokeHandler(socket, pieces, queue) { 
+function unchokeHandler(socket, pieces, queue){
   console.log("get unchoked");
-  queue.choked = false;
   //2
-  requestPiece(socket, pieces, queue);
+  if(queue.choked == true){
+    queue.choked = false;
+    requestPiece(socket, pieces, queue);
+  }
 }
   
 function haveHandler(payload, socket, pieces, queue, peer, bitfield) {
@@ -83,7 +85,7 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
       byte = Math.floor(byte / 2);
     }
   });
-  console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
+  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
   if (queueEmpty) requestPiece(socket, pieces, queue);
   //send interested 
   if(isInterested){
@@ -186,7 +188,7 @@ function requestPiece(socket, pieces, queue) {
     
     // console.log(`request piece ${pieceBlock.index}: , ${pieces.needed(pieceBlock)}`);
     if (pieces.needed(pieceBlock)) {
-      // console.log(`Request piece ${pieceBlock.index} from peer`);
+      console.log(`Request piece ${pieceBlock.index} begin ${pieceBlock.begin} from peer`);
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;

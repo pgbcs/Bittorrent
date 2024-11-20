@@ -57,6 +57,7 @@ module.exports = class {
     return !this._requested[pieceBlock.index][blockIndex];
   }
   havePiece(pieceIndex){
+    // if(!this._received[pieceIndex].every(block=> block)) console.log(`piece Index: ${pieceIndex}:`,this._received[pieceIndex]);
     return this._received[pieceIndex].every(block=> block);
   }
   receivedPiece(pieceIndex){
@@ -82,7 +83,7 @@ module.exports = class {
         // console.log(pieceIndex);
 
         if (!this.havePiece(pieceIndex)) {
-          // console.log("thiếu piece: ", pieceIndex);
+          console.log("thiếu piece: ", pieceIndex);
           return false;
         }
         const bytesInCurrentPiece = Math.min(remainingLength, PIECE_SIZE - ((offset + byteOffset) % PIECE_SIZE));

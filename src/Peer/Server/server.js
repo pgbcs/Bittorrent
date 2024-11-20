@@ -211,8 +211,10 @@ function regularUnchoke(state, torrent){
     for(let i=0; i<state.length; i++){
         if(state[i]){
             if(currentUploadSlots[inforHash(torrent)]<maxUploadSlots&&state[i].interested){
-                state[i].choked = false;
-                state[i].connection.write(message.buildUnchoke());
+                if(state[i].choked) {
+                    state[i].connection.write(message.buildUnchoke());
+                    state[i].choked = false;
+                }
                 currentUploadSlots[inforHash(torrent)]++;
             }
             else{
@@ -227,6 +229,6 @@ function optimisticUnchoke(state){
     const chokedPeers = state.filter(peer => peer.choked);
     if(chokedPeers.length > 0){
         const randomIndex = Math.floor(Math.random() * chokedPeers.length);
-        if(chokedPeers.interested) chokedPeers[randomIndex].connection.write(message.buildUnchoke());
+        if(chokedPeers.interested&&chokedPeers.choked) chokedPeers[randomIndex].connection.write(message.buildUnchoke());
     }
 }
