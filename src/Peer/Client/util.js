@@ -34,7 +34,7 @@ module.exports.updateDownloaded = (torrent,value) => {
     downloaded[inforHash(torrent)] += value;
 }
 module.exports.getUploaded = (torrent) => {
-    if(uploaded[inforHash(torrent)]){
+    if(!uploaded[inforHash(torrent)]){
         uploaded[inforHash(torrent)] = 0;
     }
     return uploaded[inforHash(torrent)];
