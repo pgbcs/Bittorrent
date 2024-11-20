@@ -11,7 +11,6 @@ const trackerDatabase={
     torrents:{}, 
 };
 
-
 const server = http.createServer((req, res) => {
     //parse param from url
     const parsedUrl = new URL(req.url, `http://${hostname}:${port}`);
@@ -63,6 +62,7 @@ const server = http.createServer((req, res) => {
                     // }
                 });
             }
+            
             console.log('trackerDatabase:', trackerDatabase);
 
             const respone = {

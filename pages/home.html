@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- <title>Bittorrent</title> -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+  <!-- Container chính -->
+  <div class="flex flex-col items-center space-y-4 bg-white p-8 rounded-lg shadow-lg">
+    <!-- Logo -->
+    <div class="w-24 h-24">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6tUEGZLbk-lgNB-1fWlEwC4wRcLDBhr5xYw&s" alt="Logo" class="rounded-full">
+    </div>
+    <!-- Tiêu đề -->
+    <h1 class="text-2xl font-semibold text-gray-800">Get Some Torrents</h1>
+    <!-- Danh sách hành động -->
+    <ul class="space-y-2 text-gray-600">
+      <li class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.586a1 1 0 01.707 1.707l-6.586 6.586a1 1 0 01-1.414 0l-6.586-6.586A1 1 0 015.414 10H10V5a1 1 0 011-1h2a1 1 0 011 1v5z" />
+        </svg>
+        <span>Click a magnet link on a website</span>
+      </li>
+      <li class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l-4-4m0 0l4-4m-4 4h16" />
+        </svg>
+        <span>Copy a magnet link to the clipboard</span>
+      </li>
+      <li class="flex items-center space-x-2" id="select-file">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Download from a torrent file</span>
+      </li>
+      <li class="flex items-center space-x-2" id="seeder">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>I want to share file</span>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    document.getElementById('select-file').addEventListener('click', async () => {
+      const result = await window.electronAPI.selectFile();
+    });
+    document.getElementById('seeder').addEventListener('click', async () => {
+      const result = await window.electronAPI.seeder();
+      console.log(result)
+    });
+
+    window.electronAPI.onMainMessage((event, data) => {
+      console.log('Message from main process:', data.fileInfoLst);
+    });
+  </script>
+
+</body>
+</html>

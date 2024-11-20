@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bittorrent</title>
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
+</head>
+<body>
+  <!-- <h1>Read File Content</h1>
+  <button id="select-file">Select File</button>
+  <pre id="file-content"></pre>  -->
+  
+  <!-- <div class="w-full  mt-10 bg-white rounded-lg shadow-lg flex items-center">
+        <div class="flex-shrink-0 w-20 h-20 mr-4 p-2">
+            <img
+            src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:quality(100)/2023_4_27_638182006866391692_ubuntu-la-gi.jpg"
+            alt="File Icon"
+            class="w-full h-full object-cover rounded-md"
+            />
+        </div>
+        <div class="flex-1">
+            <div class="mb-4">
+                <h5 class="text-lg font-semibold text-gray-800">
+                    ubuntu-21.10-desktop-amd64.iso
+                </h5>
+                <p class="text-sm text-gray-600">
+                    2.2 of 3.12 GB (70.57%) - 1 min., 30 sec. remaining
+                </p>
+            </div>
+            <div class="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div
+                    class="absolute top-0 left-0 h-4 bg-blue-600 rounded-full"
+                    style="width: 70.57%;"
+                ></div>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+                Downloading from 56 of 60 peers - DL: 10.26 MB/s, UL: 0.0 KB/s
+            </div>
+        </div>
+  </div> -->
+
+  <!-- <div class="w-full max-w-3xl mx-auto p-4 bg-white rounded-lg shadow-lg">
+    <div class="flex items-center mb-6">
+      <div class="flex-shrink-0 w-10 h-10 mr-4">
+        <img
+          src="https://static.vecteezy.com/system/resources/thumbnails/000/439/792/small/Basic_Ui__28178_29.jpg"
+          alt="Folder Icon"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      <div class="flex-1">
+        <h5 class="text-sm font-semibold text-gray-800">caltech-cs124-operating-systems</h5>
+        <p class="text-xs text-gray-600">73.17 MB of 808.0 MB (9.0%) - 11 minutes remaining</p>
+        <div class="relative w-full bg-gray-200 rounded-full h-2 mt-1">
+          <div
+            class="absolute top-0 left-0 h-2 bg-purple-600 rounded-full"
+            style="width: 9%;"
+          ></div>
+        </div>
+        <p class="text-xs text-gray-600 mt-1">Downloading from 4 of 4 peers - DL: 1.68 MB/s, UL: 0 KB/s</p>
+      </div>
+    </div>
+
+  <div class="flex items-center mb-6">
+    <div class="flex-shrink-0 w-10 h-10 mr-4">
+      <img
+        src="https://static.vecteezy.com/system/resources/thumbnails/000/439/792/small/Basic_Ui__28178_29.jpg"
+        alt="Folder Icon"
+        class="w-full h-full object-cover"
+      />
+    </div>
+    <div class="flex-1">
+      <h5 class="text-sm font-semibold text-gray-800">dnscensus2013</h5>
+      <p class="text-xs text-gray-600">39.45 MB of 15.64 GB (0.2%) - 6 hours remaining</p>
+      <div class="relative w-full bg-gray-200 rounded-full h-2 mt-1">
+        <div
+          class="absolute top-0 left-0 h-2 bg-blue-600 rounded-full"
+          style="width: 0.2%;"
+        ></div>
+      </div>
+      <p class="text-xs text-gray-600 mt-1">Downloading from 2 of 2 peers - DL: 464 KB/s, UL: 0 KB/s</p>
+    </div>
+  </div>
+
+  <div class="flex items-center mb-6">
+    <div class="flex-shrink-0 w-10 h-10 mr-4">
+      <img
+        src="https://static.vecteezy.com/system/resources/thumbnails/000/439/792/small/Basic_Ui__28178_29.jpg"
+        alt="Folder Icon"
+        class="w-full h-full object-cover"
+      />
+    </div>
+    <div class="flex-1">
+      <h5 class="text-sm font-semibold text-gray-800">The_Road_To_Greatness</h5>
+      <p class="text-xs text-gray-600">13.82 MB, uploaded None (Ratio: 0.0)</p>
+      <div class="relative w-full bg-gray-200 rounded-full h-2 mt-1">
+        <div
+          class="absolute top-0 left-0 h-2 bg-purple-600 rounded-full"
+          style="width: 100%;"
+        ></div>
+      </div>
+      <p class="text-xs text-gray-600 mt-1">Seeding to 0 of 0 connected peers</p>
+    </div>
+  </div>
+
+  <div class="flex items-center">
+    <div class="flex-shrink-0 w-10 h-10 mr-4">
+      <img
+        src="https://static.vecteezy.com/system/resources/thumbnails/000/439/792/small/Basic_Ui__28178_29.jpg"
+        alt="Folder Icon"
+        class="w-full h-full object-cover"
+      />
+    </div>
+    <div class="flex-1">
+      <h5 class="text-sm font-semibold text-gray-800">SynthText</h5>
+      <p class="text-xs text-gray-600">2.73 MB of 73.50 GB (0.0%) - 5 days remaining</p>
+      <div class="relative w-full bg-gray-200 rounded-full h-2 mt-1">
+        <div
+          class="absolute top-0 left-0 h-2 bg-blue-600 rounded-full"
+          style="width: 0.0%;"
+        ></div>
+      </div>
+      <p class="text-xs text-gray-600 mt-1">Downloading from 1 of 1 peer - DL: 131 KB/s, UL: 0 KB/s</p>
+    </div>
+  </div>
+</div> -->
+
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+  <script>
+    document.getElementById('select-file').addEventListener('click', async () => {
+      const result = await window.electronAPI.selectFile();
+
+      if (result.error) {
+        console.log(result.error); // Hiển thị lỗi nếu có
+        document.getElementById('file-content').textContent = result.error;
+      } else {
+        console.log('File path:', result.filePath);
+        console.log('File content:', result.content);
+        document.getElementById('file-content').textContent = result.content; // Hiển thị nội dung file
+      }
+    });
+  </script>
+
+
+<button 
+    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+    onclick="openModal()"
+    >
+    Chọn vị trí tải xuống
+</button>
+
+<!-- Modal -->
+<div 
+id="modal" 
+class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden"
+>
+<div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4">Chọn nơi tải xuống</h2>
+    <label class="block mb-4">
+      <span class="text-gray-600">Thư mục:</span>
+      <select class="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        <option>Tải xuống</option>
+        <option>Desktop</option>
+        <option>Documents</option>
+        <option>Custom...</option>
+        <option>Tùy chọn</option>
+      </select>
+    </label>
+    <!-- <button
+      class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+      onclick="downloadFile()"
+    >
+      Tải xuống
+    </button> -->
+    <div class="flex justify-end space-x-4">
+        <button 
+          class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+          onclick="closeModal()"
+        >
+          Đóng
+        </button>
+        <button 
+          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+        >
+           Chọn thư mục này
+        </button>
+      </div>
+  </div>
+</div>
+</div>
+
+<script>
+// Hàm mở modal
+function openModal() {
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+// Hàm đóng modal
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// Đóng modal khi click bên ngoài modal
+document.getElementById('modal').addEventListener('click', function (e) {
+  if (e.target.id === 'modal') {
+    closeModal();
+  }
+});
+</script>
+
+
+<!-- <script>
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.querySelector('.progress-text');
+  
+    // Hàm cập nhật
+    function updateProgress(percent, downloaded, total, timeRemaining, dlSpeed, ulSpeed) {
+      // Cập nhật thanh tiến trình
+      progressBar.style.width = `${percent}%`;
+  
+      // Cập nhật văn bản
+      progressText.textContent = `${downloaded} of ${total} (${percent.toFixed(2)}%) - ${timeRemaining} remaining`;
+      document.querySelector('.peer-info').textContent = `Downloading at DL: ${dlSpeed} MB/s, UL: ${ulSpeed} KB/s`;
+    }
+  
+    // Giả lập dữ liệu tải xuống
+    setInterval(() => {
+      const percent = Math.random() * 100; // Thay thế bằng dữ liệu thực tế
+      updateProgress(percent, '2.2 GB', '3.12 GB', '1 min., 30 sec.', '10.26', '0.0');
+    }, 1000);
+  </script> -->
+</body>
+</html>
+

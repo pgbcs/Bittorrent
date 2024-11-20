@@ -17,7 +17,6 @@ module.exports = {state,
         const server = net.createServer((socket) => {
             console.log('Một peer mới đã kết nối.');
 
-            
             // timer
             const timeOutId = setTimeout(() => {
                 console.log("Đóng kết nối vì thời gian phản hồi của peer đã quá hạn.");

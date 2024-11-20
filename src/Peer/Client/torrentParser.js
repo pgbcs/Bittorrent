@@ -23,13 +23,14 @@ module.exports.getFileInfo = function(torrent,basePath ,yourLocation='') {
       files.forEach(file => {
           const filePath = yourLocation + torrent.info['name'].toString()+"/"+file['path'].map(segment => segment.toString()).join(`/`);
           const fileLength = file['length'];
+          const absolutePath = path.resolve(basePath, filePath);
 
           // Tính toán vị trí của các piece
           const startPiece = Math.floor(offset / pieceLength);
           const byteOffsetInPiece = offset % pieceLength;
 
           fileInfoList.push({
-              path: filePath,
+              path: absolutePath,
               startPiece: startPiece,
               byteOffset: byteOffsetInPiece,
               length: fileLength,

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+</head>
+<body>
+  <h1>Home Page</h1>
+  <nav>
+    <button onclick="navigate('index')">Go to index</button>
+    <button onclick="navigate('home')">Go to home</button>
+  </nav>
+
+  <script>
+    function navigate(route) {
+      window.electronAPI.navigateTo(route);
+    }
+  </script>
+</body>
+</html>

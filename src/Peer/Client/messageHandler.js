@@ -39,6 +39,7 @@ function chokeHandler(queue) {
 }
 
 function unchokeHandler(socket, pieces, queue) { 
+
   console.log("get unchoked");
   queue.choked = false;
   //2
@@ -167,7 +168,7 @@ function requestPiece(socket, pieces, queue) {
     socket.write(message.buildInterested());
     return;
   }
-  // console.log("queue: ", queue._queue);
+  console.log("queue: ", queue._queue);
   while (queue.length()) {
     let pieceBlock = queue.deque();
 
@@ -183,7 +184,7 @@ function requestPiece(socket, pieces, queue) {
     
     // console.log(`request piece ${pieceBlock.index}: , ${pieces.needed(pieceBlock)}`);
     if (pieces.needed(pieceBlock)) {
-      // console.log(`Request piece ${pieceBlock.index} from peer`);
+      console.log(`Request piece ${pieceBlock.index} from peer`);
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;

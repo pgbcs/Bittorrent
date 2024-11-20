@@ -31,7 +31,7 @@ module.exports = class {
     // if (this._requested.every(blocks => blocks.every(i => i))) {
     //   this._requested = this._received.map(blocks => blocks.slice());
     // }
-    
+    console.log(this.fileInfoList)
     const fileInfo = this.fileInfoList.find(file => {
       if(file.selected == false) return false;
       // console.log("file: ", file.path);
@@ -47,9 +47,9 @@ module.exports = class {
       }
       return pieceBlock.index >= startPiece && pieceBlock.index <= endPiece;
     });
-    // console.log("have find:", fileInfo);
+    console.log("have find:", fileInfo);
     if (!fileInfo || !fileInfo.selected) {
-      // console.log("dont need this piece");
+      console.log("dont need this piece");
       return false;
     }
 

@@ -6,13 +6,14 @@ function readFileAndWritePieces(fileInfo, torrent, piecesBuffer, pieces, pieceCo
     const PIECE_SIZE = torrent.info['piece length'];
     
     return new Promise((resolve, reject) => {
+
         fs.readFile(fileInfo.path, (err, data) => {
             if (err) {
-                // console.log(`Không thể mở file: ${fileInfo.path}, bỏ qua.`);
+                console.log(`Không thể mở file: ${fileInfo.path}, bỏ qua.`);
                 return resolve();
             }
 
-            // console.log(`Đọc file thành công: ${fileInfo.path}`);
+            console.log(`Đọc file thành công: ${fileInfo.path}`);
 
             let offset = 0;
             let remainingLength = fileInfo.length;

@@ -15,6 +15,7 @@ const minimumPeerNeed = 2;
 let connectedPeer = {}
 
 module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
+  // console.log(piecesBuffer)
   if(!connectedPeer[inforHash(torrent)]){ 
     connectedPeer[inforHash(torrent)] = [];
   }

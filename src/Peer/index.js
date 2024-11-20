@@ -8,15 +8,10 @@ const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
 
 
-
 const args = process.argv.slice(2);
-// const torrentPath = 'bluemew.torrent';
-// const torrentPath = 'video.mkv.torrent';
-const torrentPath = 'Pic4rpCa.torrent';
-const torrent = torrentParser.open(torrentPath);
+const torrentPath = 'bluemew.torrent';
 
-// console.log("torrent:", torrent);
-// console.log("torrent info:", torrent.info);
+const torrent = torrentParser.open(torrentPath);
 
 const basePath = path.dirname(torrentPath);
 
@@ -44,7 +39,7 @@ async function processFile() {
     if(args[0] == 'download'){
         (async () => {
             await selectFiles(fileInfoList);
-        
+            
             // console.log('\nKết quả sau khi chọn:');
             // displayFileList(fileInfoList);
             download(torrent, pieces,piecesBuffer, fileInfoList, state);
@@ -64,4 +59,5 @@ async function processFile() {
         console.error('Error processing files:', error);
     }
 }
+
 processFile();
