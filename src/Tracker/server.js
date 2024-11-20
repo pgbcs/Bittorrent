@@ -113,6 +113,7 @@ server.listen(port, hostname, () => {
     setInterval(()=>{
        for(const torrent in trackerDatabase.torrents){
            trackerDatabase.torrents[torrent] = trackerDatabase.torrents[torrent].filter(peer=>Date.now()-peer.last_announce<timeOut);
+           displayInfo(trackerDatabase, torrent);
        } 
     //    displayInfo(trackerDatabase,info_hash.data);
     }, timeOut);

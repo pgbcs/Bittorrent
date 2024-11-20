@@ -3,6 +3,7 @@ const message = require('../util/message');
 const { inforHash } = require('../Client/torrentParser');
 const { verifyPiece } = require('../util/torrentCheck');
 const { updateUploaded } = require('../Client/util');
+const { count } = require('console');
 
 // const download = require('../Client/download');
 
@@ -52,13 +53,17 @@ module.exports = {state,
             //regular unchoke every 10s
             setInterval(() => {
                 regularUnchoke(state[inforHash(torrent)], torrent);
+                
+                state[inforHash(torrent)].forEach((peer) => {
+                    if(peer.uploaded>0) count++;
+                    peer.uploaded = 0;//reset uploaded
+                });
+
             }, 10000);
+
             //optimistic unchoke every 30s
             setInterval(() => {
                 optimisticUnchoke(state[inforHash(torrent)]);
-                state[inforHash(torrent)].forEach((peer) => {
-                    peer.uploaded = 0;//reset uploaded
-                });
             }, 30000);
             // setInterval(() => {
             //     state[inforHash(torrent)].forEach((peer) => {

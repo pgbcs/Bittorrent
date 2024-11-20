@@ -33,6 +33,8 @@ const numPeerConnected={};
 
 const numPeerDownloading={};
 
+const countDownloading = {};
+
 module.exports.createProgressList = (torrent, fileInfoList) =>{
     if(!progressList[inforHash(torrent)]){
         progressList[inforHash(torrent)] = {};
@@ -76,17 +78,28 @@ module.exports.updateProgressList = (torrent, payload, fileInfoList) => {
     // console.log("progressList: ", progressList[inforHash(torrent)]);
 };
 
+
+module.exports.getSizeList = (torrent) =>{
+    return sizeList[inforHash(torrent)];
+};
+
+module.exports.getProgressList = (torrent) =>{
+    return progressList[inforHash(torrent)];
+};
+
 module.exports.updateNumPeerConnected = (torrent, num) =>{
     if(!numPeerConnected[inforHash(torrent)]){
         numPeerConnected[inforHash(torrent)] = 0;
     }
     numPeerConnected[inforHash(torrent)] = num;
+    // console.log("numPeerConnected: ", numPeerConnected[inforHash(torrent)]);
 };
 
 module.exports.getNumPeerConnected = (torrent) =>{
     if(!numPeerConnected[inforHash(torrent)]){
         numPeerConnected[inforHash(torrent)] = 0;
     }
+    
     return numPeerConnected[inforHash(torrent)];
 }
 
@@ -95,6 +108,7 @@ module.exports.updateNumPeerDownloading = (torrent, num) =>{
         numPeerDownloading[inforHash(torrent)] = 0;
     }
     numPeerDownloading[inforHash(torrent)] = num;
+    // console.log("numPeerDownloading: ", numPeerDownloading[inforHash(torrent)]);
 };
 
 module.exports.getNumPeerDownloading = (torrent) =>{
@@ -102,4 +116,13 @@ module.exports.getNumPeerDownloading = (torrent) =>{
         numPeerDownloading[inforHash(torrent)] = 0;
     }
     return numPeerDownloading[inforHash(torrent)];
+}
+
+module.exports.updateCountDownloading = (torrent, timer) =>{
+    countDownloading[inforHash(torrent)] = timer;
+};
+
+module.exports.removeCountDownloading = (torrent) =>{
+    clearInterval(countDownloading[inforHash(torrent)]);
+    console.log("remove countDownloading");
 }

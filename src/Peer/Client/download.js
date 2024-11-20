@@ -6,7 +6,8 @@ const message = require('../util/message');
 const {msgHandler} = require('./messageHandler');
 const Queue = require('./Queue');
 const { inforHash } = require('./torrentParser');
-const { updateNumPeerConnected } = require('./properties');
+const { updateNumPeerConnected, updateNumPeerDownloading, updateCountDownloading,removeCountDownloading } = require('./properties');
+
 
 
 // let pieces = {};
@@ -23,16 +24,16 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
   setStatus(torrent, 'started');
   tracker.getPeers(torrent, (peers) => {
     peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
+    updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
   });
 
-  updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
+  
 
   setStatus(torrent,'downloading');
   timerID = setInterval(() => {
     let callback=(peers) => {
       console.log("handle list peer");
       peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
-      updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
     };
 
     if(connectedPeer[inforHash(torrent)].length>=minimumPeerNeed){
@@ -42,6 +43,17 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
 
   },10000);
 
+  countSourceTimer = setInterval(() => {
+    let count = 0;
+    connectedPeer[inforHash(torrent)].forEach((peer) => {
+      if(peer.uploaded){ 
+        count++;
+        peer.uploaded = false;}//reset uploaded}
+    });
+    updateNumPeerDownloading(torrent, count);
+  }, 50);
+
+  updateCountDownloading(torrent, countSourceTimer);
 };
 
 function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timerID) {
@@ -79,12 +91,13 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
     socket.connect(peer.port, peer.ip, () => {
       socket.write(message.buildHandshake(torrent));
       //push peer to connectedPeer if connected
-      const peerConnection = peer;
+      const peerConnection = {...peer, connection: socket, uploaded: false};
   
       connectedPeer[inforHash(torrent)].push(peerConnection);
+      updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
     });
 
-    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield));
+    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer[inforHash(torrent)]));
   } 
 }
 
