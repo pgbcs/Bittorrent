@@ -6,6 +6,7 @@ const message = require('../util/message');
 const {msgHandler} = require('./messageHandler');
 const Queue = require('./Queue');
 const { inforHash } = require('./torrentParser');
+const { updateNumPeerConnected } = require('./properties');
 
 
 // let pieces = {};
@@ -23,17 +24,20 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
   tracker.getPeers(torrent, (peers) => {
     peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
   });
+
+  updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
+
   setStatus(torrent,'downloading');
   timerID = setInterval(() => {
     let callback=(peers) => {
       console.log("handle list peer");
       peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
+      updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
     };
 
     if(connectedPeer[inforHash(torrent)].length>=minimumPeerNeed){
       callback =()=>{};
     }
-
     tracker.getPeers(torrent, callback);
 
   },10000);

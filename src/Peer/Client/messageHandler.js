@@ -6,6 +6,7 @@ const readline = require('readline');
 const { selectFiles } = require('./chooseFile');
 const { updateDownloaded, setStatus } = require('./util');
 const { updateProgressBar } = require('./progress');
+const { updateProgressList } = require('./properties');
 
 
 
@@ -103,6 +104,9 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   updateDownloaded(torrent, payload.block.length);
   // updateProgressBar(fileInfoList, payload.block.length, torrent);
   pieces.addReceived(payload);
+
+  updateProgressList(torrent, payload, fileInfoList);
+  
   // console.log("data received", piecesBuffer);
   /****************
   *Use for show download concurrently
@@ -137,6 +141,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
     writeFilesFromPieces(fileInfoList, piecesBuffer, torrent);
     // socket.end();
     console.log('DONE!');
+    
     //should send not interested peer
     const rl1 = readline.createInterface({
       input: process.stdin,  
@@ -188,7 +193,7 @@ function requestPiece(socket, pieces, queue) {
     
     // console.log(`request piece ${pieceBlock.index}: , ${pieces.needed(pieceBlock)}`);
     if (pieces.needed(pieceBlock)) {
-      console.log(`Request piece ${pieceBlock.index} begin ${pieceBlock.begin} from peer`);
+      // console.log(`Request piece ${pieceBlock.index} begin ${pieceBlock.begin} from peer`);
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;

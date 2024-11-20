@@ -1,4 +1,5 @@
 const http = require('http');
+const { inforHash } = require('../Peer/Client/torrentParser');
 
 const hostname = '127.0.0.1'; // Server IP address
 const port = 8888; // Server port
@@ -62,7 +63,9 @@ const server = http.createServer((req, res) => {
                     // }
                 });
             }
-            console.log('trackerDatabase:', trackerDatabase);
+            if(trackerDatabase){
+                displayInfo(trackerDatabase,info_hash.data);
+            }
 
             const respone = {
                 interval: 10000,
@@ -110,8 +113,8 @@ server.listen(port, hostname, () => {
     setInterval(()=>{
        for(const torrent in trackerDatabase.torrents){
            trackerDatabase.torrents[torrent] = trackerDatabase.torrents[torrent].filter(peer=>Date.now()-peer.last_announce<timeOut);
-        //    console.log(`tracker after clear: `, trackerDatabase);
        } 
+    //    displayInfo(trackerDatabase,info_hash.data);
     }, timeOut);
 });
 
@@ -124,4 +127,26 @@ function getRandomPeers(peers, maxPeers = 30) {
 
     // Lấy tối đa `maxPeers` phần tử từ mảng đã xáo trộn
     return (peers.length> maxPeers)? peers.slice(0, maxPeers): peers;
+}
+
+const CliTable = require('cli-table3');
+
+function displayInfo(trackerDatabase, info_hash) {
+    // Xóa màn hình và đặt con trỏ về đầu
+    process.stdout.write('\x1B[2J\x1B[0;0H');
+    console.log(`==== TRACKER INFO ====`);
+
+    const table = new CliTable({
+        head: ['PORT', 'STATUS', 'UPLOADED', 'DOWNLOADED', 'LEFT', 'LAST ANNOUNCE'], // Tiêu đề cột
+        colWidths: [10, 15, 15, 15, 10, 25] // Chiều rộng từng cột
+    });
+
+    // Thêm dữ liệu vào bảng
+    trackerDatabase.torrents[info_hash].forEach((torrent) => {
+        const { port, status, uploaded, downloaded, left, last_announce } = torrent;
+        table.push([port, status, uploaded, downloaded, left, (new Date(last_announce)).toLocaleString()]);
+    });
+
+    // Hiển thị bảng
+    console.log(table.toString());
 }

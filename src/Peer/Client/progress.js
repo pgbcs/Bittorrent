@@ -32,15 +32,6 @@ module.exports.createProgressBar = (fileInfoList, torrent) => {
     });
 };
 
-module.exports.updateProgressBar = (fileInfoList, length, torrent) => {
-    // fileInfoList.forEach((fileInfo, index) => {
-    //     const startPicece = fileInfo.startPiece;
-    //     const endPiece = startPicece + Math.floor((fileInfo.byteOffset + fileInfo.length - 1) / torrent.info['piece length']);
-    //     if(pieceBlock.index>=startPicece && pieceBlock.index<=endPiece){
-    //         barList[inforHash(torrent)][fileInfo.path].increment(min(pieceBlock.length, torrent.info['piece length']));
-    //     }
-    // });
-    fileInfoList.forEach((fileInfo) => {
-        barList[inforHash(torrent)][fileInfo.path].increment(length);
-    });
+module.exports.updateProgressBar = (torrent, filePath, length) => {
+    barList[inforHash(torrent)][filePath].increment(length);
 };

@@ -107,7 +107,7 @@ function msgHandler(socket, msg, torrent, pieces, piecesBuffer, timeOutId, state
         if(m.size == 0) keepAliveHandler(socket, timeOutId);
         if(m.id == 2) interestedHandler(socket, torrent);
         if(m.id == 3) uninterestedHandler(socket, torrent);
-        if(m.id == 6) requestHandler(socket, m.payload, piecesBuffer, state);
+        if(m.id == 6) requestHandler(socket, m.payload, piecesBuffer, torrent);
     }
 }
 

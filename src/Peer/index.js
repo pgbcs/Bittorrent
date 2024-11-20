@@ -6,6 +6,8 @@ const {genPort, getIntervalForGetListPeer, setStatus, getStatus} = require('./Cl
 const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
+
+const {createProgressList } = require('./Client/properties');
 const { createProgressBar } = require('./Client/progress');
 
 
@@ -13,8 +15,8 @@ const { createProgressBar } = require('./Client/progress');
 const args = process.argv.slice(2);
 // const torrentPath = 'bluemew.torrent';
 // const torrentPath = 'video.mkv.torrent';
-const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
-// const torrentPath = 'Pic4rpCa.torrent';
+// const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
+const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 
 
@@ -31,7 +33,6 @@ if(args[0] == 'download'){
 
 const fileInfoList = torrentParser.getFileInfo(torrent ,basePath,`received${clientID}/`);
 // createProgressBar(fileInfoList, torrent);
-
 
 let isSeeder = false;
 
@@ -51,7 +52,10 @@ async function processFile() {
     if(args[0] == 'download'){
         (async () => {
             await selectFiles(fileInfoList);
-            console.log(fileInfoList);
+
+            createProgressList(torrent, fileInfoList);
+            // createProgressBar(fileInfoList, torrent);
+            // console.log(fileInfoList);
             // console.log('\nKết quả sau khi chọn:');
             // displayFileList(fileInfoList);
             download(torrent, pieces,piecesBuffer, fileInfoList, state);
