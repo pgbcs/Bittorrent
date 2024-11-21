@@ -48,7 +48,7 @@ module.exports.createProgressList = (torrent, fileInfoList) =>{
     });
 };
 
-module.exports.updateProgressList = (torrent, payload, fileInfoList) => {
+module.exports.updateProgressList = (torrent, payload, fileInfoList,win) => {
     const { index: pieceIndex,begin: byteBegin} = payload;
     const length = payload.block.length;
 
@@ -75,9 +75,9 @@ module.exports.updateProgressList = (torrent, payload, fileInfoList) => {
         }
     }
 
+    win.webContents.send('progress', progressList[inforHash(torrent)])
     // console.log("progressList: ", progressList[inforHash(torrent)]);
 };
-
 
 module.exports.getSizeList = (torrent) =>{
     return sizeList[inforHash(torrent)];

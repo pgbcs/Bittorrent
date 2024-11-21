@@ -10,7 +10,7 @@ const { updateProgressList, removeCountDownloading } = require('./properties');
 
 
 
-module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield,connectedPeer) {
+module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield,connectedPeer,win) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
         // queue.choked = false;
@@ -26,7 +26,7 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
       if (m.id === 1) unchokeHandler(socket, pieces,queue);
       if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer, bitfield);
       if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload, peer, bitfield);
-      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer, bitfield, connectedPeer);
+      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer, bitfield, connectedPeer,win);
     }
 }
   
@@ -101,7 +101,7 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 
 
-function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer){
+function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer,win){
   updateDownloaded(torrent, payload.block.length);
   connectedPeer.forEach((peer)=>{
     peer.uploaded = true;
@@ -109,7 +109,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   // updateProgressBar(fileInfoList, payload.block.length, torrent);
   pieces.addReceived(payload);
 
-  updateProgressList(torrent, payload, fileInfoList);
+  updateProgressList(torrent, payload, fileInfoList,win);
   
   // console.log("data received", piecesBuffer);
   /****************

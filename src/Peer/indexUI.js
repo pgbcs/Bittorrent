@@ -7,6 +7,9 @@ const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
 
+const {createProgressList } = require('./Client/properties');
+const { createProgressBar } = require('./Client/progress');
+
 module.exports.runProcess =  (torrentPath,args,win,ipcMain) => {
     const torrent = torrentParser.open(torrentPath);
 
@@ -46,14 +49,19 @@ module.exports.runProcess =  (torrentPath,args,win,ipcMain) => {
                     // console.log("Message received from renderer:", data);
                     // console.log(data)
                     win.loadFile(path.join(__dirname,'../../pages/down.html'));
+                    setTimeout(() => {
+                        win.webContents.send('main-to-renderer',data)   
+                    },500)   
                     pieces.fileInfoList = data
-                    download(torrent, pieces,piecesBuffer, data, state);
+                    setTimeout(()=>{
+                        createProgressList(torrent, data);
+                        download(torrent, pieces,piecesBuffer, data, state,win);
+                    },1000)
                 });
             })();
         }
         if(args[0] == 'seeder'){
-            console.log(fileInfoList)
-            console.log(torrent)
+            
             tracker.getPeers(torrent,()=>{});
             
             setStatus(torrent,'completed');

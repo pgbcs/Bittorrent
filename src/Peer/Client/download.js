@@ -16,7 +16,7 @@ const minimumPeerNeed = 2;
 
 let connectedPeer = {}
 
-module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
+module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state,win) => {
   // console.log(piecesBuffer)
   if(!connectedPeer[inforHash(torrent)]){ 
     connectedPeer[inforHash(torrent)] = [];
@@ -24,7 +24,7 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
   let timerID = null;
   setStatus(torrent, 'started');
   tracker.getPeers(torrent, (peers) => {
-    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID));
+    peers.forEach(peer => download(peer, torrent, pieces, piecesBuffer, fileInfoList, state, timerID,win));
     updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
   });
 
@@ -57,7 +57,7 @@ module.exports = (torrent, pieces,piecesBuffer,fileInfoList, state) => {
   updateCountDownloading(torrent, countSourceTimer);
 };
 
-function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timerID) {
+function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timerID,win) {
   if (genPort(torrent)==peer.port) {
     console.log("Skip myself");
     return;
@@ -98,7 +98,7 @@ function download(peer,torrent, pieces, piecesBuffer, fileInfoList, state, timer
       updateNumPeerConnected(torrent, connectedPeer[inforHash(torrent)].length);
     });
 
-    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer[inforHash(torrent)]));
+    onWholeMsg(socket,msg => msgHandler(msg, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer[inforHash(torrent)],win));
   } 
 }
 

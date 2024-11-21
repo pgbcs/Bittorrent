@@ -1,44 +1,89 @@
-const progressBar = document.getElementById('progress-bar');
-const progressInfo = document.getElementById('progress-info');
-const peerInfo = document.getElementById('peer-info');
 
-// Dữ liệu ban đầu
-let downloaded = 0; // MB đã tải
-const totalSize = 80.0; // MB tổng
-const dlSpeed = 1.68; // MB/s
-const ulSpeed = 0; // KB/s
-const peers = 1; // peers hiện tại
+window.electronAPI.progress((event, data) => {
+    const tableBody = document.querySelector("tbody");
 
-let isDownloading = true; // Cờ trạng thái tải
+    Object.keys(data).forEach((path) => {
+        const downloaded = data[path];
 
-// Hàm cập nhật thanh tiến trình
-function updateProgress() {
-    if (!isDownloading) return; // Nếu không tải, dừng cập nhật
+       
+        const row = Array.from(tableBody.querySelectorAll("tr")).find(
+            (tr) => {
+                const pathOfRow =  tr.querySelector("td").getAttribute("value")
+                return pathOfRow === path
+            }
+        );
 
-    // Tăng lượng tải dựa trên tốc độ tải
-    downloaded += dlSpeed;
+        if (!row) {
+            return;
+        }
 
-    // Đảm bảo không vượt quá tổng dung lượng
-    if (downloaded > totalSize) {
-    downloaded = totalSize;
-    }
+        
+        const length = parseFloat(row.children[2].getAttribute("value"));
 
-    // Tính toán phần trăm tiến trình
-    const percent = (downloaded / totalSize) * 100;
+        const percent = Math.min((downloaded / length) * 100, 100); 
 
-    // Cập nhật thanh tiến trình và thông tin
-    progressBar.style.width = `${percent}%`;
-    progressInfo.textContent = `${downloaded.toFixed(2)} MB of ${totalSize} MB (${percent.toFixed(
-    1
-    )}%) - ${Math.max(0, ((totalSize - downloaded) / dlSpeed / 60).toFixed(1))} minutes remaining`;
-    peerInfo.textContent = `Downloading from ${peers} of ${peers} peers - DL: ${dlSpeed} MB/s, UL: ${ulSpeed} KB/s`;
+        const progressBar = row.querySelector(".bg-blue-600");
+        const progressText = row.querySelector(".bg-blue-600 span");
 
-    // Dừng khi tải xong
-    if (downloaded >= totalSize) {
-    clearInterval(progressInterval);
-    isDownloading = false; // Cập nhật trạng thái
-    peerInfo.textContent = "Đã tải xong";
-    }
+        progressBar.style.width = `${percent}%`;
+        progressText.textContent = `${percent.toFixed(1)}%`;
+
+        if (percent === 100) {
+            row.children[4].textContent = "Completed"; 
+        }
+    });
+});
+
+
+
+function formatBytes(bytes) {
+    if (bytes === 0) return "0 Bytes";
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
 }
-// Cập nhật tiến trình mỗi giây
-const progressInterval = setInterval(updateProgress,100);
+
+window.electronAPI.onMainMessage((event, data) => {
+    console.log(data)
+    const tableBody = document.querySelector("tbody");
+    data.forEach((file, index) => {
+        if(!file.selected){
+            return;
+        }
+        const name = file.path.substring(file.path.lastIndexOf("\\") + 1);
+        
+        const number = index + 1;
+        const size = formatBytes(file.length);
+        const done = `<div class="relative w-full">
+                        <div class="relative bg-gray-200 rounded-full h-6">
+                            <div
+                                class="absolute top-0 left-0 h-6 bg-blue-600 rounded-full text-white text-center"
+                                style="width: 0%;"
+                            >
+                            <span>0%</span>
+                            </div>
+                        </div>
+                      </div>`;
+        const status = "Downloading";
+        const downloadingFrom = "-";
+        const downSpeed = "-";
+    
+        const row = `
+            <tr>
+                <td class="border border-gray-300 px-4 py-2" value="${file.path}" >${name}</td>
+                <td class="border border-gray-300 px-4 py-2">${number}</td>
+                <td class="border border-gray-300 px-4 py-2" value=${file.length}>${size}</td>
+                <td class="border border-gray-300 py-2">${done}</td>
+                <td class="border border-gray-300 px-4 py-2">${status}</td>
+                <td class="border border-gray-300 px-4 py-2">${downloadingFrom}</td>
+                <td class="border border-gray-300 px-4 py-2">${downSpeed}</td>
+            </tr>
+        `;
+    
+        tableBody.innerHTML += row;
+})
+})
+
+
+
+

@@ -65,3 +65,7 @@ const buttonNext = document.getElementById("next")
 buttonNext.addEventListener("click",() => {
     window.electronAPI.sendMessage(filesList);
 })
+
+window.electronAPI.progress((event, data) => {
+    console.log(data)
+});

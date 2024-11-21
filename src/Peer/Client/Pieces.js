@@ -47,9 +47,9 @@ module.exports = class {
       }
       return pieceBlock.index >= startPiece && pieceBlock.index <= endPiece;
     });
-    console.log("have find:", fileInfo);
+    // console.log("have find:", fileInfo);
     if (!fileInfo || !fileInfo.selected) {
-      console.log("dont need this piece");
+      // console.log("dont need this piece");
       return false;
     }
 

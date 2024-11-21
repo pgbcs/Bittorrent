@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   navigateTo: (route) => ipcRenderer.invoke('navigate-to', route),
   onFileSelected: (callback) => ipcRenderer.on('file-selected', callback),
   onMainMessage: (callback) => ipcRenderer.on('main-to-renderer', callback),
+  progress: (callback) => ipcRenderer.on('progress', callback),
   sendMessage: (data) => ipcRenderer.send("next", data)
 });
