@@ -67,7 +67,7 @@ module.exports.inforHash = torrent =>{
 }
 
 
-module.exports.BLOCK_LEN = Math.pow(2, 19);
+module.exports.BLOCK_LEN = Math.pow(2, 14);
 ;
 
 module.exports.size = (torrent) => {

@@ -14,8 +14,8 @@ const { createProgressBar } = require('./Client/progress');
 
 const args = process.argv.slice(2);
 // const torrentPath = 'bluemew.torrent';
-const torrentPath = 'video.mkv.torrent';
-// const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
+// const torrentPath = 'video.mkv.torrent';
+const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
 // const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 

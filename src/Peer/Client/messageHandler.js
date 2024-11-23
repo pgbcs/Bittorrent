@@ -177,6 +177,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
         connectedPeer.forEach((peer)=>{
           peer.connection.end();
         });
+        console.log(connectedPeer);
         rl1.close();
       } 
     });
