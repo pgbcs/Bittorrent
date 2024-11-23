@@ -45,9 +45,11 @@ const server = http.createServer((req, res) => {
             else {
                 trackerDatabase.torrents[info_hash.data].forEach(peer => {
                     if(Buffer.compare(Buffer.from(peer.peer_id),Buffer.from(peer_id.data))==0){
+                        // console.log(event);
                         if(event === 'completed'&&peer.status !== 'completed'){
                             if(!downloadedForScrape[info_hash.data]){downloadedForScrape[info_hash.data] = 0;}
                             downloadedForScrape[info_hash.data]++;
+                            // console.log("downloadedForScrape: ", downloadedForScrape);
                         }
                         peer.status = event;
                         peer.downloaded = downloaded;
@@ -84,7 +86,7 @@ const server = http.createServer((req, res) => {
             // console.log("info_hash: ", info_hash.data);
             if(trackerDatabase.torrents[info_hash.data]){
                 const respone = {
-                    downloaded: downloadedForScrape,
+                    downloaded: downloadedForScrape[info_hash.data]||0,
                     complete: trackerDatabase.torrents[info_hash.data].filter(peer=>peer.status === 'completed').length,//number of completed
                     incomplete: trackerDatabase.torrents[info_hash.data].filter(peer=>peer.status !== 'completed').length,//number of incomplete
                 };

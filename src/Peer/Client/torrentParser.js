@@ -2,13 +2,14 @@ const fs = require('fs');
 const bencode = require('bencode');
 const crypto = require('crypto');
 const path = require('path');
+const { get } = require('http');
 
 module.exports.open = (filepath) => {
     return bencode.decode(fs.readFileSync(filepath));
 };
 
 module.exports.getFileInfo = function(torrent,basePath ,yourLocation='') {
-
+  // BLOCK_LEN = torrent.info['piece length']/4;
   // console.log(torrent.info['files']);
 
   const info = torrent.info;
@@ -65,7 +66,9 @@ module.exports.inforHash = torrent =>{
     return crypto.createHash('sha1').update(info).digest();
 }
 
-module.exports.BLOCK_LEN = Math.pow(2, 14);
+
+module.exports.BLOCK_LEN = Math.pow(2, 19);
+;
 
 module.exports.size = (torrent) => {
   // Triển khai hàm size để tính tổng kích thước của torrent
