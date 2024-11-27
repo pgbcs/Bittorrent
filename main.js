@@ -1,6 +1,7 @@
 const path = require('path');
 const cluster = require("cluster");
 const { app, BrowserWindow, ipcMain, dialog,Menu } = require('electron');
+const account = require("./data/data.js").account
 const peer = require("./src/Peer/indexUI")
 
 let win
@@ -8,15 +9,14 @@ let num_process = process.argv.slice(2);
 
 const createWindow = () => {
     win = new BrowserWindow({
-      width: 800,
-      height: 600,
+      width: 1600,
+      height: 1000,
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
-        contextIsolation: true, // Bảo mật
       },
     });
     // Menu.setApplicationMenu(null);
-    win.loadFile(path.join(__dirname, 'pages', 'home.html'));
+    win.loadFile(path.join(__dirname, 'pages', 'index.html'));
       
     win.setTitle(`User  ${num_process}`);
 };
@@ -32,7 +32,7 @@ ipcMain.handle('select-file', async () => {
         title: 'Select a Torrent File'
     });
 
-    win.loadFile(path.join(__dirname, 'pages', 'selectfile.html'));
+    win.loadFile(path.join(__dirname, 'pages', 'select.html'));
 
     if (result.filePaths && result.filePaths.length > 0) {
 
@@ -94,5 +94,21 @@ ipcMain.handle('navigate-to', (event, route) => {
 });
 
 
+ipcMain.on('form-data', (event, data) => {
+  const { email, password } = data;
+  console.log(email,password)
+  const user = account.find(
+    (account) => account.name === email && account.password === password
+  );
 
+  if (user) {
+    win.loadFile(path.join(__dirname, 'pages', 'choosefile.html')); 
+    setTimeout(()=>{
+      event.reply('login-status', { success: true, message: 'Login successful!' });
+    },300)
+  } else {
+    console.log("login fail")
+    event.reply('login-status', { success: false, message: "Incorrect username or password. Please try again."});
+  }
+});
 

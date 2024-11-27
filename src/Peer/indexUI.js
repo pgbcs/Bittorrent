@@ -7,7 +7,7 @@ const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
 
-const {createProgressList } = require('./Client/properties');
+const {createProgressList ,setTimer} = require('./Client/properties');
 const { createProgressBar } = require('./Client/progress');
 
 module.exports.runProcess =  (torrentPath,args,win,ipcMain) => {
@@ -48,14 +48,28 @@ module.exports.runProcess =  (torrentPath,args,win,ipcMain) => {
                 ipcMain.on("next",(event, data) => {
                     // console.log("Message received from renderer:", data);
                     // console.log(data)
-                    win.loadFile(path.join(__dirname,'../../pages/down.html'));
+                    win.loadFile(path.join(__dirname,'../../pages/dashboard.html'));
+
+                    console.log("Next",data)
+
                     setTimeout(() => {
                         win.webContents.send('main-to-renderer',data)   
-                    },500)   
+                    },500)  
+
+                    ipcMain.on("continue",(event,data)=>{
+                        win.loadFile(path.join(__dirname,'../../pages/select.html'));
+                        // console.log("con cac",data)
+                        setTimeout(() => {
+                            win.webContents.send('main-to-renderer',{ fileInfoLst :data })   
+                        },500)
+                    })
+
                     pieces.fileInfoList = data
-                    setTimeout(()=>{
+
+                    setTimeout(()=>{    
                         createProgressList(torrent, data);
-                        download(torrent, pieces,piecesBuffer, data, state,win);
+                        setTimer(torrent, new Date());
+                        download(torrent, pieces,piecesBuffer, data, state,win,ipcMain,data);
                     },1000)
                 });
             })();

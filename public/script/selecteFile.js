@@ -13,7 +13,8 @@ const handileFile = (files) => {
     };
     
     const tableBody = document.getElementById("file-table");
-    
+    const selectAllCheckbox = document.getElementById("select-all");
+
     files.forEach((file,index) => {
         const row = document.createElement("tr");
         row.classList.add("hover:bg-gray-50");
@@ -42,22 +43,29 @@ const handileFile = (files) => {
         selectCell.appendChild(checkbox);
         
         checkbox.addEventListener("change", (e) => {
-            files[e.target.dataset.index].selected = e.target.checked;
-            // Check if all checkboxes are selected
-            const allSelected = files.every((file) => file.selected);
-            document.getElementById("select-all").checked = allSelected;
-            console.log(files)
+            files[e.target.dataset.index].selected = e.target.checked;            
         });
 
         row.appendChild(selectCell);
     
         tableBody.appendChild(row);
     });
+    
+
+    selectAllCheckbox.addEventListener("change", (e) => {        
+        const isChecked = e.target.checked;
+        files.forEach((file, index) => {
+            file.selected = isChecked;
+            const checkbox = document.querySelector(`input[data-index="${index}"]`);
+            checkbox.checked = isChecked;
+        });
+    })
 }
 
 
 window.electronAPI.onMainMessage((event, data) => {
     filesList = data.fileInfoLst
+    console.log(filesList)
     handileFile(filesList)
 });
 

@@ -1,0 +1,40 @@
+/* Fix overflow for sidebar */
+aside#sidebar-multi-level-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px; /* Đặt chiều rộng cố định cho sidebar */
+    height: 100vh;
+    overflow-y: auto; /* Cho phép cuộn nội dung bên trong sidebar */
+    background: #081b29; /* Màu nền sidebar */
+    z-index: 50; /* Đảm bảo sidebar nằm dưới header */
+}
+
+/* Fix header */
+header {
+    position: fixed;
+    top: 0;
+    left: 250px; /* Đẩy header sang phải bằng chiều rộng của sidebar */
+    width: calc(100% - 250px); /* Đảm bảo header không bị che bởi sidebar */
+    z-index: 100; /* Header nằm trên sidebar */
+    /* background: #081b29;  */
+    color: #000000;
+    padding: 20px;
+    display: flex;
+    font-weight: 700;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Content section adjustment */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.home {
+    margin-top: 80px; /* Đẩy nội dung xuống dưới header */
+    margin-left: 250px; /* Đẩy nội dung sang phải tránh sidebar */
+    padding: 20px;
+}

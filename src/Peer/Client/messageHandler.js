@@ -10,7 +10,7 @@ const { updateProgressList, removeCountDownloading, getTimer } = require('./prop
 
 
 
-module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield,connectedPeer,win) {
+module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield,connectedPeer,win,ipcMain,data) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
         // queue.choked = false;
@@ -26,7 +26,7 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
       if (m.id === 1) unchokeHandler(socket, pieces,queue, peer);
       if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer, bitfield);
       if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload, peer, bitfield);
-      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer, bitfield, connectedPeer,win);
+      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,data, state, timerID, peer, bitfield, connectedPeer,win,ipcMain,data);
     }
 }
   
@@ -73,6 +73,7 @@ function setPieceInBitfield(bitfield, pieceIndex) {
 }
 
 function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
+  console.log("Co chay qa bitfieldHandler")
   const queueEmpty = queue.length() === 0;
   bitfield.value = payload;
   // console.log("bitfieldHandler: ", payload);
@@ -102,14 +103,14 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 
 
-function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer){
+function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer,win,ipcMain,data){
   const blockIndex = payload.begin / torrentParser.BLOCK_LEN;
   if(pieces._received[payload.index][blockIndex]) {
     requestPiece(socket, pieces, queue, peer);
     return;
   }
   updateDownloaded(torrent, payload.block.length);
-  updateProgressList(torrent, payload, fileInfoList);
+  updateProgressList(torrent, payload, data,win);
   pieces.addReceived(payload);
   connectedPeer.find(obj => peer.port === obj.port).uploaded =true;
   // updateProgressBar(fileInfoList, payload.block.length, torrent);
@@ -158,29 +159,36 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
       input: process.stdin,  
       output: process.stdout 
     });
-    rl1.question('Do you want to download more? (y/n)', (answer) => {
-      if(answer === 'y'){
-        // console.log("bitfield: ", bitfield);
-        rl1.close();
-        async function run(fileInfoList, bitfieldHandler, socket, pieces, queue, payload, peer, bitfield) {
-          await selectFiles(fileInfoList); // Đợi người dùng nhập liệu xong
-          bitfieldHandler(socket, pieces, queue, payload, peer, bitfield.value); // Gọi `bitfieldHandler` sau khi hoàn tất
-        }
-        run(fileInfoList, bitfieldHandler, socket, pieces, queue, bitfield.value, peer, bitfield);
-      }
-      else if(answer === 'n'){
-        if(timerID){
-          clearInterval(timerID);
-          console.log("cleared timer for get list peers");
-          removeCountDownloading(torrent);
-        }
-        connectedPeer.forEach((peer)=>{
-          peer.connection.end();
-        });
-        console.log(connectedPeer);
-        rl1.close();
-      } 
-    });
+
+    ipcMain.on("continue1",(event)=>{
+        fileInfoList = data
+        console.log("Data with continue",data)
+        bitfieldHandler(socket, pieces, queue,  bitfield.value, peer, bitfield); // Gọi `bitfieldHandler` sau khi hoàn tất
+    })
+
+    // rl1.question('Do you want to download more? (y/n)', (answer) => {
+    //   if(answer === 'y'){
+    //     // console.log("bitfield: ", bitfield);
+    //     rl1.close();
+    //     async function run(fileInfoList, bitfieldHandler, socket, pieces, queue, payload, peer, bitfield) {
+    //       await selectFiles(fileInfoList); // Đợi người dùng nhập liệu xong
+    //       bitfieldHandler(socket, pieces, queue, payload, peer, bitfield.value); // Gọi `bitfieldHandler` sau khi hoàn tất
+    //     }
+    //     run(fileInfoList, bitfieldHandler, socket, pieces, queue, bitfield.value, peer, bitfield);
+    //   }
+    //   else if(answer === 'n'){
+    //     if(timerID){
+    //       clearInterval(timerID);
+    //       console.log("cleared timer for get list peers");
+    //       removeCountDownloading(torrent);
+    //     }
+    //     connectedPeer.forEach((peer)=>{
+    //       peer.connection.end();
+    //     });
+    //     console.log(connectedPeer);
+    //     rl1.close();
+    //   } 
+    // });
   } else {
     requestPiece(socket,pieces, queue, peer);
   }

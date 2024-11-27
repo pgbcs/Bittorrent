@@ -1,5 +1,8 @@
 
-window.electronAPI.progress((event, data) => {
+let saveData = []
+
+window.electronAPI.progress((event, data) => {1
+
     const tableBody = document.querySelector("tbody");
 
     Object.keys(data).forEach((path) => {
@@ -16,7 +19,6 @@ window.electronAPI.progress((event, data) => {
         if (!row) {
             return;
         }
-
         
         const length = parseFloat(row.children[2].getAttribute("value"));
 
@@ -44,6 +46,7 @@ function formatBytes(bytes) {
 }
 
 window.electronAPI.onMainMessage((event, data) => {
+    saveData = data
     console.log(data)
     const tableBody = document.querySelector("tbody");
     data.forEach((file, index) => {
@@ -85,5 +88,10 @@ window.electronAPI.onMainMessage((event, data) => {
 })
 
 
+const buttonNext = document.getElementById("continue")
+buttonNext.addEventListener("click",() => {
+    window.electronAPI.continue(saveData)
+    window.electronAPI.continue1(saveData)
+})
 
 
