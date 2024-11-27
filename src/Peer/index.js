@@ -7,14 +7,14 @@ const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
 const {selectFiles, displayFileList} = require('./Client/chooseFile');    
 
-const {createProgressList } = require('./Client/properties');
+const {createProgressList, setTimer } = require('./Client/properties');
 const { createProgressBar } = require('./Client/progress');
 
 
 const args = process.argv.slice(2);
-const torrentPath = 'bluemew.torrent';
+// const torrentPath = 'bluemew.torrent';
 // const torrentPath = 'video.mkv.torrent';
-// const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
+const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
 // const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 
@@ -57,6 +57,7 @@ async function processFile() {
             // console.log(fileInfoList);
             // console.log('\nKết quả sau khi chọn:');
             // displayFileList(fileInfoList);
+            setTimer(torrent, new Date());
             download(torrent, pieces,piecesBuffer, fileInfoList, state);
         })();
     }

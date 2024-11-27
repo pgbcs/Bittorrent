@@ -35,6 +35,8 @@ const numPeerDownloading={};
 
 const countDownloading = {};
 
+let timer = {};
+
 module.exports.createProgressList = (torrent, fileInfoList) =>{
     if(!progressList[inforHash(torrent)]){
         progressList[inforHash(torrent)] = {};
@@ -124,5 +126,13 @@ module.exports.updateCountDownloading = (torrent, timer) =>{
 
 module.exports.removeCountDownloading = (torrent) =>{
     clearInterval(countDownloading[inforHash(torrent)]);
-    console.log("remove countDownloading");
+    // console.log("remove countDownloading");
+}
+
+module.exports.setTimer = (torrent, time) =>{
+    timer[inforHash(torrent)] = time;
+}
+
+module.exports.getTimer = (torrent) =>{
+    return timer[inforHash(torrent)];
 }

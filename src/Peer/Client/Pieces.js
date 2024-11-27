@@ -24,6 +24,9 @@ module.exports = class {
 
   addReceived(pieceBlock) {
     const blockIndex = pieceBlock.begin / tp.BLOCK_LEN;
+    // if(this._received[pieceBlock.index][blockIndex] == true) {
+    //   console.log("duplicate block"); 
+    // }
     this._received[pieceBlock.index][blockIndex] = true;
   }
 
@@ -31,10 +34,8 @@ module.exports = class {
     // if (this._requested.every(blocks => blocks.every(i => i))) {
     //   this._requested = this._received.map(blocks => blocks.slice());
     // }
-    console.log(this.fileInfoList)
-    const fileInfo = this.fileInfoList.find(file => {
-      if(file.selected == false) return false;
-      // console.log("file: ", file.path);
+    this.fileInfoList.forEach(file => {
+      if(file.selected == false) return;
       const startPiece = file.startPiece;
       const endPiece = startPiece + Math.floor((file.byteOffset + file.length - 1) / this.torrent.info['piece length']);
       // console.log("startPiece: ", startPiece);
@@ -45,6 +46,21 @@ module.exports = class {
             this._requested[pieceIndex] = this._received[pieceIndex].slice();
         }
       }
+    });
+
+    const fileInfo = this.fileInfoList.find(file => {
+      if(file.selected == false) return false;
+      // console.log("file: ", file.path);
+      const startPiece = file.startPiece;
+      const endPiece = startPiece + Math.floor((file.byteOffset + file.length - 1) / this.torrent.info['piece length']);
+      // console.log("startPiece: ", startPiece);
+      // console.log("endPiece: ", endPiece);
+      // for (let pieceIndex = startPiece; pieceIndex <= endPiece; pieceIndex++) {
+      //   if (this._requested[pieceIndex].every(block => block)) {
+      //       // Nếu tất cả các blocks của piece đã được yêu cầu, sao chép từ _received
+      //       this._requested[pieceIndex] = this._received[pieceIndex].slice();
+      //   }
+      // }
       return pieceBlock.index >= startPiece && pieceBlock.index <= endPiece;
     });
     // console.log("have find:", fileInfo);
