@@ -47,7 +47,7 @@ function httpGET(hostname, port, param) {
 }
 
 //gen port do chạy cùng máy
-function buildAnnounceReq(torrent,event='started', downloaded = 0, uploaded = 0, left=0, port=genPort(torrent)){
+function buildAnnounceReq(torrent,event='started', downloaded = 0, uploaded = 0, left=0, port=genPort(torrentParser.inforHash(torrent))){
     return {
         connection_id: 0x41727101980,
         action: "announce",

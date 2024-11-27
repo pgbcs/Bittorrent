@@ -2,15 +2,12 @@ const message = require('../util/message');
 const fs = require('fs');
 const torrentParser = require('../Client/torrentParser');
 const path = require('path');
-const readline = require('readline');
-const { selectFiles } = require('./chooseFile');
-const { updateDownloaded, setStatus } = require('./util');
-const { updateProgressBar } = require('./progress');
-const { updateProgressList, removeCountDownloading, getTimer } = require('./properties');
 
 
 
-module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield,connectedPeer) {
+
+
+module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, peer, bitfield, infoHash, parentPort) {
     if (isHandshake(msg)) {
         console.log('connect succesfully');
         // queue.choked = false;
@@ -22,11 +19,12 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
       // console.log("message:", m);console.log(piecesBuffer);
       // console.log(piecesBuffer);
       // console.log(peer.peerId);
+      // if(m.id!=7) console.log(`received msg from ${peer.port}:`, m);
       if (m.id === 0) chokeHandler(queue);
-      if (m.id === 1) unchokeHandler(socket, pieces,queue, peer);
+      if (m.id === 1) unchokeHandler(socket, pieces, queue, peer);
       if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer, bitfield);
-      if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload, peer, bitfield);
-      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer, bitfield, connectedPeer);
+      if (m.id === 5) {bitfieldHandler(socket, pieces, queue, m.payload, peer, bitfield);}
+      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, peer, bitfield, parentPort);
     }
 }
   
@@ -47,6 +45,7 @@ function unchokeHandler(socket, pieces, queue, peer){
     queue.choked = false;
     requestPiece(socket, pieces, queue, peer);
   }
+  
 }
   
 function haveHandler(payload, socket, pieces, queue, peer, bitfield) {
@@ -54,10 +53,9 @@ function haveHandler(payload, socket, pieces, queue, peer, bitfield) {
   //update bitfield for re-download
   const pieceIndex = payload.readUInt32BE(0);
   setPieceInBitfield(bitfield, pieceIndex);
-  // console.log(`have piece ${pieceIndex} from peer have ${peer.port}`);
   const queueEmpty = queue.length() === 0;
   if(!pieces.havePiece(pieceIndex)) {queue.queue(pieceIndex, ++pieces._freq[pieceIndex]);}
-  
+  // console.log(`reeceived have message from peer have ${peer.port}`);
   // console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
   // console.log('queue empty:', queueEmpty);
   if (queueEmpty) requestPiece(socket, pieces, queue, peer);
@@ -80,19 +78,22 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
   payload.forEach((byte, i) => {
     for (let j = 0; j < 8; j++) {
       if (byte % 2){
+        // console.log(`queue piece ${i * 8 + 7 - j} from bitfield`);
         if(!pieces.havePiece(i * 8 + 7 - j)){
           queue.queue(i * 8 + 7 - j, ++pieces._freq[i * 8 + 7 - j]);
+
           isInterested = true;
         }
       }
       byte = Math.floor(byte / 2);
     }
   });
-  // console.log(`queue for peer have socket ${peer.port}:`, queue._queue.size());
+  // console.log(`queue for peer have socket ${peer.port}:`, queue);
   if (queueEmpty) requestPiece(socket, pieces, queue, peer);
   //send interested 
   if(isInterested){
     // socket.write(message.buildInterested());
+    // console.log("send interested");
   }
   else{
     socket.write(message.buildUninterested());
@@ -102,17 +103,27 @@ function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
 
 
 
-function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, state, timerID, peer, bitfield, connectedPeer){
+function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fileInfoList, peer, bitfield, parentPort){
   const blockIndex = payload.begin / torrentParser.BLOCK_LEN;
-  if(pieces._received[payload.index][blockIndex]) {
+  // console.log(`blockIndex: ${blockIndex}`);
+  // console.log("check:", payload.index*torrentParser.blocksPerPiece(torrent, 0) + blockIndex)
+  if(pieces._received[payload.index*torrentParser.blocksPerPiece(torrent, 0) + blockIndex]) {
+    // console.log("duplicate block");
+    if(pieces.isDone()){
+      queue._queue=[];
+      socket.write(message.buildUninterested());
+      return;
+    }
     requestPiece(socket, pieces, queue, peer);
     return;
   }
-  updateDownloaded(torrent, payload.block.length);
-  updateProgressList(torrent, payload, fileInfoList);
+  parentPort.postMessage({type: 'downloaded', payload: payload, peer});
+  parentPort.postMessage({type: 'received', port: peer.port});
   pieces.addReceived(payload);
-  connectedPeer.find(obj => peer.port === obj.port).uploaded =true;
-  // updateProgressBar(fileInfoList, payload.block.length, torrent);
+
+  // connectedPeer.find(obj => peer.port === obj.port).uploaded =true;
+
+
 
   
   
@@ -121,66 +132,31 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   *Use for show download concurrently
     console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   // ****************/
-  console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+  // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   // write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   
-  if(!piecesBuffer[payload.index]){
-    piecesBuffer[payload.index] = Buffer.alloc(torrentParser.pieceLen(torrent, payload.index));
+  // payload.block.copy(piecesBuffer[payload.index], payload.begin);
+  for(let i=0; i< payload.block.length; i++){
+    piecesBuffer[payload.index*torrent.info['piece length']+payload.begin+i] = payload.block[i];
   }
-  payload.block.copy(piecesBuffer[payload.index], payload.begin);
+  
   // fs.write(file, payload.block, 0, payload.block.length, offset, () => {});
 
   //annouce for every peer is connecting know about new piece block you have
   if(pieces.havePiece(payload.index)){
-    state[torrentParser.inforHash(torrent)].forEach((st)=>{
-      st.connection.write(message.buildHave(payload.index));
-    })
-    // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+    parentPort.postMessage({type: 'have', payload: {index: payload.index, peer: peer}});
   }
-  //use for measure upload speed with this socket
-  const PeerUpload = state[torrentParser.inforHash(torrent)].find(obj => Buffer.compare(obj.peerId, Buffer.from(peer.peer_id.data))===0);
-  if(PeerUpload){
-    PeerUpload.uploaded += payload.block.length;
-  }
+
   if (pieces.isDone(torrent)) {
     //spend slot for other peer
-    setStatus(torrent, "completed");
+    // setStatus(torrent, "completed");
     socket.write(message.buildUninterested());
-
     writeFilesFromPieces(fileInfoList, piecesBuffer, torrent);
     // socket.end();
     console.log('DONE!');
-    console.log("Download completed in ", new Date().getTime()-getTimer(torrent).getTime(), "ms");
-    removeCountDownloading(torrent);
-    //should send not interested peer
-    const rl1 = readline.createInterface({
-      input: process.stdin,  
-      output: process.stdout 
-    });
-    rl1.question('Do you want to download more? (y/n)', (answer) => {
-      if(answer === 'y'){
-        // console.log("bitfield: ", bitfield);
-        rl1.close();
-        async function run(fileInfoList, bitfieldHandler, socket, pieces, queue, payload, peer, bitfield) {
-          await selectFiles(fileInfoList); // Đợi người dùng nhập liệu xong
-          bitfieldHandler(socket, pieces, queue, payload, peer, bitfield.value); // Gọi `bitfieldHandler` sau khi hoàn tất
-        }
-        run(fileInfoList, bitfieldHandler, socket, pieces, queue, bitfield.value, peer, bitfield);
-      }
-      else if(answer === 'n'){
-        if(timerID){
-          clearInterval(timerID);
-          console.log("cleared timer for get list peers");
-          removeCountDownloading(torrent);
-        }
-        connectedPeer.forEach((peer)=>{
-          peer.connection.end();
-        });
-        console.log(connectedPeer);
-        rl1.close();
-      } 
-    });
+    parentPort.postMessage({type: 'done'});
+  
   } else {
     requestPiece(socket,pieces, queue, peer);
   }
@@ -196,15 +172,15 @@ function requestPiece(socket, pieces, queue, peer) {
   while (queue.length()) {
     let pieceBlock = queue.deque();
 
-    while(pieceBlock.freq != pieces._freq[pieceBlock.index]){ // nếu block trong queue có freq khác với freq hiện tại thì phải cập nhật lại freq
-      // console.log("pieceBlock freq: ", pieceBlock.freq)
-      // console.log("current pieces freq: ", pieces._freq[pieceBlock.index]);
-      pieceBlock._freq = pieces._freq[pieceBlock.index];
-      queue.queue(pieceBlock.index, pieceBlock._freq);
-      pieceBlock = queue.deque();
-      // console.log("udpated freq");
-      // break;
-    }
+    // while(pieceBlock.freq != pieces._freq[pieceBlock.index]){ // nếu block trong queue có freq khác với freq hiện tại thì phải cập nhật lại freq
+    //   // console.log("pieceBlock freq: ", pieceBlock.freq)
+    //   // console.log("current pieces freq: ", pieces._freq[pieceBlock.index]);
+    //   pieceBlock._freq = pieces._freq[pieceBlock.index];
+    //   queue.queue(pieceBlock.index, pieceBlock._freq);
+    //   pieceBlock = queue.deque();
+    //   // console.log("udpated freq");
+    //   // break;
+    // }
     
     // console.log(`request piece ${pieceBlock.index}: , ${pieces.needed(pieceBlock)}`);
     if (pieces.needed(pieceBlock)) {
@@ -227,6 +203,8 @@ function requestPiece(socket, pieces, queue, peer) {
  * @param {Object} torrent - Thông tin torrent bao gồm độ dài mỗi piece.
  */
 function writeFilesFromPieces(fileInfoList, piecesBuffer, torrent) {
+  // console.log('Ghi dữ liệu vào file...');
+  // console.log(fileInfoList);
   fileInfoList.forEach(fileInfo => {
       if(!fileInfo.selected) return;
       const { path: filePath, startPiece, byteOffset, length } = fileInfo;
@@ -245,28 +223,35 @@ function writeFilesFromPieces(fileInfoList, piecesBuffer, torrent) {
       let offset = 0;
 
       while (remainingLength > 0) {
+        
           const pieceIndex = startPiece + Math.floor((offset+byteOffset) / torrent.info['piece length']);
           const byteOffsetInPiece = (byteOffset + offset) % torrent.info['piece length'];
   
           // Kiểm tra nếu piece chưa tồn tại
-          if (!piecesBuffer[pieceIndex]) {
-              console.log(`Piece ${pieceIndex} không tồn tại trong buffer.`);
-              break;
-          }
+          // if (!piecesBuffer[pieceIndex]) {
+          //     console.log(`Piece ${pieceIndex} không tồn tại trong buffer.`);
+          //     break;
+          // }
 
           
           // Tính toán phần dữ liệu cần ghi
           const availableSpaceInPiece = torrent.info['piece length'] - byteOffsetInPiece;
           const bytesToWrite = Math.min(remainingLength, availableSpaceInPiece);
-            // Ghi dữ liệu từ piece vào file
+          // console.log(`Ghi piece ${pieceIndex}, offset ${offset}, bytes ${bytesToWrite}`);
+          // console.log("byteOffsetInPiece: ", byteOffsetInPiece);
+          // console.log(`slice length:`, piecesBuffer.slice(pieceIndex * torrent.info['piece length'] + byteOffsetInPiece, pieceIndex * torrent.info['piece length'] + byteOffsetInPiece + bytesToWrite));
+          // console.log('Start:', pieceIndex * torrent.info['piece length'] + byteOffsetInPiece);
+          // console.log('End:', pieceIndex * torrent.info['piece length'] + byteOffsetInPiece + bytesToWrite);
+          // console.log('Buffer Length:', piecesBuffer.length);
+          //   // Ghi dữ liệu từ piece vào file
             fs.writeSync(
                 fileDescriptor,
-                piecesBuffer[pieceIndex],
-                byteOffsetInPiece,
+                piecesBuffer.slice(pieceIndex * torrent.info['piece length'] + byteOffsetInPiece, pieceIndex * torrent.info['piece length'] + byteOffsetInPiece + bytesToWrite),
+                0,
                 bytesToWrite,
                 offset
             );
-          // console.log(`Ghi piece ${pieceIndex}, offset ${offset}, bytes ${bytesToWrite}`);
+          
 
           offset += bytesToWrite;
           remainingLength -= bytesToWrite;

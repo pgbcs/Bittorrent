@@ -3,7 +3,7 @@ const util = require('../Client/util');
 const Buffer = require('buffer').Buffer;
 const torrentParser = require('../Client/torrentParser');
 
-module.exports.buildHandshake = torrent => {
+module.exports.buildHandshake = (torrent, infoHash=false, peerId =false)  => {
   const buf = Buffer.alloc(68);
   // pstrlen
   buf.writeUInt8(19, 0);
@@ -13,9 +13,15 @@ module.exports.buildHandshake = torrent => {
   buf.writeUInt32BE(0, 20);
   buf.writeUInt32BE(0, 24);
   // info hash
-  torrentParser.inforHash(torrent).copy(buf, 28);
+  if(infoHash) infoHash.copy(buf, 28);
+  else {
+    torrentParser.inforHash(torrent).copy(buf, 28);
+  }
   // peer id
-  util.genID(torrent).copy(buf,48);
+  if(peerId) {peerId.copy(buf, 48);
+    // console.log("peerId in message: ", peerId);
+  } 
+  else util.genID(torrent).copy(buf,48);
 //   buf.write(util.genID());
   return buf;
 };

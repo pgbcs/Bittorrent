@@ -1,4 +1,4 @@
-const { updateProgressBar } = require("./progress");
+
 const { inforHash } = require("./torrentParser");
 
 /*
@@ -126,7 +126,7 @@ module.exports.updateCountDownloading = (torrent, timer) =>{
 
 module.exports.removeCountDownloading = (torrent) =>{
     clearInterval(countDownloading[inforHash(torrent)]);
-    // console.log("remove countDownloading");
+    console.log("remove countDownloading");
 }
 
 module.exports.setTimer = (torrent, time) =>{

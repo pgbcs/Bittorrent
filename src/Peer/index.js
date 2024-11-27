@@ -2,23 +2,29 @@ const tracker = require('./Client/tracker');
 const torrentParser = require('./Client/torrentParser');
 const download = require('./Client/download');
 const {server, state} = require('./Server/server');
-const {genPort, getIntervalForGetListPeer, setStatus, getStatus} = require('./Client/util');
+const {genPort, getIntervalForGetListPeer, setStatus, getStatus, updateDownloaded, getDownloaded} = require('./Client/util');
 const path = require('path');
 const {processFiles } = require('./Client/readAndWritePieces');
-const {selectFiles, displayFileList} = require('./Client/chooseFile');    
+const {selectFiles} = require('./Client/chooseFile');    
 
 const {createProgressList, setTimer } = require('./Client/properties');
-const { createProgressBar } = require('./Client/progress');
+
 
 
 
 const args = process.argv.slice(2);
 // const torrentPath = 'bluemew.torrent';
 // const torrentPath = 'video.mkv.torrent';
-const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
+// const torrentPath = 'drive-download-20241105T125636Z-001.torrent';
+const torrentPath = 'raw_chap2,3-20241102T142328Z-001.torrent';
 // const torrentPath = 'Pic4rpCa.torrent';
 const torrent = torrentParser.open(torrentPath);
 
+// console.log(torrentParser.BLOCK_LEN);
+// console.log(torrentParser.blocksPerPiece(torrent, 0));
+// console.log(torrentParser.blockLen(torrent, 1510, 0));
+// console.log(torrentParser.size(torrent, 0));   
+// console.log(torrentParser.pieceLen(torrent, 1510));
 
 // console.log("torrent:", torrent);
 // console.log("torrent info:", torrent.info);
@@ -41,13 +47,13 @@ if(args[0]=='seeder'){
 }
 tracker.scrape(torrent);
 
-let piecesBuffer, pieces;
+
 async function processFile() {
     try {
-        [piecesBuffer, pieces] = await processFiles(fileInfoList, torrent);
+        const [pieces, sharedPieceBuffer, sharedReceivedBuffer, sharedRequestedBuffer, sharedFreqBuffer] = await processFiles(fileInfoList, torrent);
         
-
-        const peerServer = server(genPort(torrent),torrent, pieces, piecesBuffer);
+        // console.log('pieces:', pieces);
+        const peerServer = server(genPort(torrentParser.inforHash(torrent)),torrent, pieces, sharedPieceBuffer);
 
     if(args[0] == 'download'){
         (async () => {
@@ -59,10 +65,13 @@ async function processFile() {
             // console.log('\nKết quả sau khi chọn:');
             // displayFileList(fileInfoList);
             setTimer(torrent, new Date());
-            download(torrent, pieces,piecesBuffer, fileInfoList, state);
+            download(torrent, sharedPieceBuffer, sharedReceivedBuffer, sharedRequestedBuffer, sharedFreqBuffer, fileInfoList, state);
         })();
     }
     if(args[0] == 'seeder'){
+        getDownloaded(torrent);
+        updateDownloaded(torrent,torrentParser.size(torrent));
+        // console.log(torrentParser.size(torrent));
         tracker.getPeers(torrent,()=>{});
         
         setStatus(torrent,'completed');

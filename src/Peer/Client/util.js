@@ -7,6 +7,7 @@ let uploaded = {};
 let downloaded = {};
 let status = {};
 let interval = {};
+let timerForGetListPeer = {};
 
 // Generate ID: http://www.bittorrent.org/beps/bep_0020.html
 module.exports.genID = (torrent) => {
@@ -18,13 +19,14 @@ module.exports.genID = (torrent) => {
 };
 
 
-module.exports.genPort=(torrent)=>{
-    if (!port[inforHash(torrent)]) {
+module.exports.genPort=(infoHash)=>{
+    // console.log("infoHash called: ", infoHash);
+    if (!port[infoHash]) {
         const min = 6000;
         const max = 7000;
-        port[inforHash(torrent)]= Math.floor(Math.random() * (max - min + 1)) + min;
+        port[infoHash]= Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    return port[inforHash(torrent)];
+    return port[infoHash];
 }
 
 module.exports.updateUploaded = (torrent,value) => {
@@ -67,4 +69,12 @@ module.exports.getIntervalForGetListPeer=(torrent)=>{
 }
 module.exports.setIntervalForGetListPeer=(torrent,value)=>{    
     interval[inforHash(torrent)] = value;
+}
+
+module.exports.setTimerForGetListPeer=(torrent,value)=>{
+    timerForGetListPeer[inforHash(torrent)] = value;
+}
+
+module.exports.getTimerForGetListPeer=(torrent)=>{
+    return timerForGetListPeer[inforHash(torrent)];
 }

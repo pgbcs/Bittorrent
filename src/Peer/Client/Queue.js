@@ -5,8 +5,8 @@ const tp = require('./torrentParser');
 module.exports = class {
   constructor(torrent) {
     this._torrent = torrent;
-    const compareFunction = (a, b) => a.freq - b.req;
-    this._queue = new PriorityQueue(compareFunction);
+    // const compareFunction = (a, b) => a.freq - b.req;
+    this._queue = [];
     this.choked = true;
   }
 
@@ -20,13 +20,17 @@ module.exports = class {
         length: tp.blockLen(this._torrent, pieceIndex, i),
         freq
       };
-      this._queue.enqueue(pieceBlock);
+      // console.log("pieceBlock: ", pieceBlock);
+      this._queue.push(pieceBlock);
     }
   }
 
-  deque() { return this._queue.dequeue(); }
+  deque() { 
+    const randomIndex = Math.floor(Math.random() * this._queue.length);
+    const removedElement = this._queue.splice(randomIndex, 1)[0];
+    return removedElement;}
 
-  peek() { return this._queue.peek(); }
+  // peek() { return this._queue.peek(); }
 
-  length() { return this._queue.size(); }
+  length() { return this._queue.length; }
 };
