@@ -23,3 +23,10 @@ document.getElementById('seeder').addEventListener('click', async () => {
   const result = await window.electronAPI.seeder();
   console.log(result)
 });
+
+
+
+document.getElementById('exitButton').addEventListener('click', () => {
+  // Gửi thông điệp tới main process để đóng ứng dụng
+  window.electronAPI.exitApp();
+});

@@ -1,7 +1,10 @@
 
 let saveData = []
+let down1Data = null;
+let down2Data = null;
 
-window.electronAPI.progress((event, data) => {1
+
+window.electronAPI.progress((event, data) => {
 
     const tableBody = document.querySelector("tbody");
 
@@ -95,3 +98,43 @@ buttonNext.addEventListener("click",() => {
 })
 
 
+
+window.electronAPI.down1((event, data) => {
+    down1Data = data;  // Store the data from down1
+    // console.log("down1", down1Data);
+    updateDownloadingFrom();  // Update "Downloading From" when down1 data is received
+});
+
+window.electronAPI.down2((event, data) => {
+    down2Data = data;  // Store the data from down2
+    // console.log("down2", down2Data);
+    updateDownloadingFrom();  // Update "Downloading From" when down2 data is received
+});
+
+function updateDownloadingFrom() {
+    // If both down1Data and down2Data are available, update the table rows
+        const tableBody = document.querySelector("tbody");
+        const rows = Array.from(tableBody.querySelectorAll("tr"));
+        
+        rows.forEach((row) => {
+           
+            // Get the count of peers from down1 and down2 data
+            const a = down1Data  // Default to 0 if no data for this file
+            const b = down2Data  // Default to 0 if no data for this file
+
+            // Format the "Downloading From" value
+            const downloadingFrom = `Downloading ${b} peers`;
+
+            // console.log(downloadingFrom)
+            // Update the table cell for "Downloading From"
+            row.children[5].textContent = downloadingFrom;
+        });
+    
+}
+
+
+
+document.getElementById('exitButton').addEventListener('click', () => {
+    // Gửi thông điệp tới main process để đóng ứng dụng
+    window.electronAPI.exitApp();
+});

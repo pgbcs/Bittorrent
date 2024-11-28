@@ -112,3 +112,6 @@ ipcMain.on('form-data', (event, data) => {
   }
 });
 
+ipcMain.handle('exitApp', () => {
+  app.quit(); // Đóng ứng dụng
+});

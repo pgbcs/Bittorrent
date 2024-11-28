@@ -14,7 +14,7 @@ form.addEventListener('submit', (e) => {
 
 window.electronAPI.onLoginStatus((status) => {
     if (!status.success) {
-        console.log(status)
+        // console.log(status)
       // Hiển thị thông báo nếu đăng nhập thất bại
       notificationMessage.textContent = status.message;
       notification.classList.remove('hidden');
@@ -24,3 +24,9 @@ window.electronAPI.onLoginStatus((status) => {
       }, 3000);
     }
   });
+
+
+  document.getElementById('exitButton').addEventListener('click', () => {
+    // Gửi thông điệp tới main process để đóng ứng dụng
+    window.electronAPI.exitApp();
+});

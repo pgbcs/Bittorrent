@@ -1,4 +1,4 @@
-const { updateProgressBar } = require("./progress");
+
 const { inforHash } = require("./torrentParser");
 
 /*
@@ -89,12 +89,15 @@ module.exports.getProgressList = (torrent) =>{
     return progressList[inforHash(torrent)];
 };
 
-module.exports.updateNumPeerConnected = (torrent, num) =>{
+module.exports.updateNumPeerConnected = (torrent, num,win) =>{
     if(!numPeerConnected[inforHash(torrent)]){
         numPeerConnected[inforHash(torrent)] = 0;
     }
     numPeerConnected[inforHash(torrent)] = num;
-    // console.log("numPeerConnected: ", numPeerConnected[inforHash(torrent)]);
+
+    // console.log(numPeerConnected[inforHash(torrent)])
+    win.webContents.send('down1', numPeerConnected[inforHash(torrent)])
+
 };
 
 module.exports.getNumPeerConnected = (torrent) =>{
@@ -105,11 +108,14 @@ module.exports.getNumPeerConnected = (torrent) =>{
     return numPeerConnected[inforHash(torrent)];
 }
 
-module.exports.updateNumPeerDownloading = (torrent, num) =>{
+module.exports.updateNumPeerDownloading = (torrent, num,win) =>{
     if(!numPeerDownloading[inforHash(torrent)]){
         numPeerDownloading[inforHash(torrent)] = 0;
     }
     numPeerDownloading[inforHash(torrent)] = num;
+
+    // console.log(numPeerDownloading[inforHash(torrent)] = num)
+    win.webContents.send('down2', numPeerDownloading[inforHash(torrent)])
     // console.log("numPeerDownloading: ", numPeerDownloading[inforHash(torrent)]);
 };
 
@@ -126,7 +132,7 @@ module.exports.updateCountDownloading = (torrent, timer) =>{
 
 module.exports.removeCountDownloading = (torrent) =>{
     clearInterval(countDownloading[inforHash(torrent)]);
-    // console.log("remove countDownloading");
+    console.log("remove countDownloading");
 }
 
 module.exports.setTimer = (torrent, time) =>{
