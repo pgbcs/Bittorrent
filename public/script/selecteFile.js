@@ -62,7 +62,6 @@ const handileFile = (files) => {
     })
 }
 
-
 window.electronAPI.onMainMessage((event, data) => {
     filesList = data.fileInfoLst
     console.log(filesList)
@@ -70,10 +69,21 @@ window.electronAPI.onMainMessage((event, data) => {
 });
 
 const buttonNext = document.getElementById("next")
-buttonNext.addEventListener("click",() => {
-    window.electronAPI.sendMessage(filesList);
-})
+if(buttonNext){
+    buttonNext.addEventListener("click",() => {
+        window.electronAPI.sendMessage(filesList);
+    })
+}
+
 
 window.electronAPI.progress((event, data) => {
     console.log(data)
 });
+
+const buttonNext2 = document.getElementById("next2")
+if(buttonNext2){
+    buttonNext2.addEventListener("click",() => {
+        window.electronAPI.sendMessage2(filesList);
+    })
+}
+

@@ -91,7 +91,7 @@ window.electronAPI.onMainMessage((event, data) => {
 const buttonNext = document.getElementById("continue")
 buttonNext.addEventListener("click",() => {
     window.electronAPI.continue(saveData)
-    window.electronAPI.continue1(saveData)
+    window.electronAPI.continue1()
 })
 
 

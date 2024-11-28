@@ -8,6 +8,7 @@ const { updateDownloaded, setStatus } = require('./util');
 const { updateProgressBar } = require('./progress');
 const { updateProgressList, removeCountDownloading, getTimer } = require('./properties');
 
+let countdown = 1;
 
 
 module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, torrent, file, state, timerID, peer, bitfield,connectedPeer,win,ipcMain,data) {
@@ -18,6 +19,7 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
         // console.log("received: ",pieces._received);
     }
     else {
+    
       const m = message.parse(msg);
       // console.log("message:", m);console.log(piecesBuffer);
       // console.log(piecesBuffer);
@@ -26,7 +28,7 @@ module.exports.msgHandler= function(msg, socket, pieces, queue, piecesBuffer, to
       if (m.id === 1) unchokeHandler(socket, pieces,queue, peer);
       if (m.id === 4) haveHandler(m.payload, socket, pieces, queue, peer, bitfield);
       if (m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload, peer, bitfield);
-      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,data, state, timerID, peer, bitfield, connectedPeer,win,ipcMain,data);
+      if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, piecesBuffer, torrent,file, state, timerID, peer, bitfield, connectedPeer,win,ipcMain,data);
     }
 }
   
@@ -73,7 +75,7 @@ function setPieceInBitfield(bitfield, pieceIndex) {
 }
 
 function bitfieldHandler(socket, pieces, queue, payload, peer, bitfield) {
-  console.log("Co chay qa bitfieldHandler")
+  // console.log("Tai bitfieldHandler",pieces.fileInfoList)
   const queueEmpty = queue.length() === 0;
   bitfield.value = payload;
   // console.log("bitfieldHandler: ", payload);
@@ -110,7 +112,10 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
     return;
   }
   updateDownloaded(torrent, payload.block.length);
-  updateProgressList(torrent, payload, data,win);
+
+  // console.log("Tai progress",fileInfoList)
+
+  updateProgressList(torrent, payload, fileInfoList,win);
   pieces.addReceived(payload);
   connectedPeer.find(obj => peer.port === obj.port).uploaded =true;
   // updateProgressBar(fileInfoList, payload.block.length, torrent);
@@ -160,11 +165,16 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
       output: process.stdout 
     });
 
-    ipcMain.on("continue1",(event)=>{
+    ipcMain.on("next2",(event, data)=>{
         fileInfoList = data
-        console.log("Data with continue",data)
-        bitfieldHandler(socket, pieces, queue,  bitfield.value, peer, bitfield); // Gọi `bitfieldHandler` sau khi hoàn tất
+        win.loadFile(path.join(__dirname,'../../../pages/dashboard.html'));
+        // console.log("con cac",data)
+        setTimeout(() => {
+            win.webContents.send('main-to-renderer',data)   
+        },500)
+        bitfieldHandler(socket, pieces, queue,  bitfield.value, peer, bitfield.value); // Gọi `bitfieldHandler` sau khi hoàn tất
     })
+
 
     // rl1.question('Do you want to download more? (y/n)', (answer) => {
     //   if(answer === 'y'){

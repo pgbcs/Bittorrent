@@ -8,8 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onMainMessage: (callback) => ipcRenderer.on('main-to-renderer', callback),
   progress: (callback) => ipcRenderer.on('progress', callback),
   sendMessage: (data) => ipcRenderer.send("next", data),
+  sendMessage2: (data) => ipcRenderer.send("next2", data),
   sendFormData: (email, password) => ipcRenderer.send('form-data', { email, password }),
   continue: (data) => ipcRenderer.send("continue",data),
-  continue1: (data) => ipcRenderer.send("continue1",data),
+  continue1: () => ipcRenderer.send("continue1"),
   onLoginStatus: (callback) => ipcRenderer.on('login-status', (event, status) => callback(status)),
 });
