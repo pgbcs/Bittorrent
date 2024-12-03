@@ -132,7 +132,7 @@ function pieceHandler(payload, socket, pieces, queue, piecesBuffer, torrent, fil
   *Use for show download concurrently
     console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
   // ****************/
-  // console.log(`Piece ${payload.index} received from peer have ${peer.port}`);
+  console.log(`Piece ${payload.index} received from peer port ${peer.port}`);
   // write peer to file
   // const offset = payload.index * torrent.info['piece length'] + payload.begin;
   

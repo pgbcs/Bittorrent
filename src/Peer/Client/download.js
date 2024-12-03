@@ -121,7 +121,7 @@ module.exports =async (torrent, sharedPieceBuffer, sharedReceivedBuffer, sharedR
       });
 
       worker.on('error', (err) => {
-        console.error(`Worker error:`, err);
+        // console.error(`Worker error:`, err);
         runNextWorker();
       });
 
